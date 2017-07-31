@@ -1,4 +1,4 @@
-# Compiled source #
+# Compiled
 *.com
 *.class
 *.dll
@@ -6,7 +6,7 @@
 *.o
 *.so
 
-# Packages #
+# Packages
 *.7z
 *.dmg
 *.gz
@@ -16,12 +16,12 @@
 *.tar
 *.zip
 
-# Logs and databases #
+# Logs and databases
 *.log
 *.sql
 *.sqlite
 
-# OS generated files #
+# OS 
 .DS_Store
 .DS_Store?
 ._*
@@ -30,7 +30,7 @@
 ehthumbs.db
 Thumbs.db
 
-# PSoC Files #
+# PSoC 
 *.cywrk.*
 *.cyprj.*
 *.cycdx
@@ -39,11 +39,12 @@ Thumbs.db
 *.uvopt
 *.uvproj
 *_timing.html
-*.cydsn/codegentemp
-*.cydsn/DP8051
-*.cydsn/Generated_Source
+codegentemp/
+DP8051/
+Generated_Source/
+CortexM3/
 
-# Altium Stuff #
+# Altium 
 History
 __Previews
 *.PrjPCBStructure
@@ -53,6 +54,6 @@ __Previews
 Project Outputs for *
 Project Logs for *
 
-# PCB Stuff #
+# PCB 
 *.IntLib
 *.LOG
