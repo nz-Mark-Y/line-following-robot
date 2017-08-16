@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <project.h>
 #include <ADC_SAR.h>
+#include <CONTROL.h>
 //* ========================================
 #include "defines.h"
 #include "vars.h"
@@ -40,21 +41,24 @@ int main()
 // ------USB SETUP ----------------    
 #ifdef USE_USB    
     USBUART_Start(0,USBUART_5V_OPERATION);
-#endif        
-    usbPutString(displaystring);
+#endif   
+    
     RF_BT_SELECT_Write(0);
-
-    M1_D1_Write(0);
-    M1_D2_Write(1);
-    M1_enable_Write(1);
+    
+    //M1_D1_Write(0);
+    //M1_D2_Write(1);
+    //M1_enable_Write(1);
     M1_IN1_Write(0);
     M1_IN2_Write(1);
     
-    M2_D1_Write(0);
-    M2_D2_Write(1);
-    M2_enable_Write(1);
+    //M2_D1_Write(0);
+    //M2_D2_Write(1);
+    //M2_enable_Write(1);
     M2_IN1_Write(1);
     M2_IN2_Write(0);
+    
+    CONTROL_Write(0x03); // 0x03 == 0b00000011
+    
 
     uint16 ADCValue = 0;
     ADC_Start();
@@ -84,9 +88,13 @@ int main()
             LED_Write(0);
             LED_on = 0;
         }
-        itoa(max, line, 10);
-        usbPutString(line);
-        usbPutString("\n");
+        /*
+        if (USBUART_GetDeviceAddress() = 0) {
+            itoa(max, line, 10);
+            usbPutString(line);
+            usbPutString("\n");
+        }
+        */
     }
     
   /* 
