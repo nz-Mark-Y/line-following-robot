@@ -28,12 +28,8 @@ void usbPutString(char *s);
 void usbPutChar(char c);
 void handle_usb();
 //* ========================================
-
-
 int main()
 {
-    
-
 // --------------------------------    
 // ----- INITIALIZATIONS ----------
     CYGlobalIntEnable;
@@ -42,44 +38,42 @@ int main()
 #ifdef USE_USB    
     USBUART_Start(0,USBUART_5V_OPERATION);
 #endif   
-    
+
+    int usbOutput = 0;
     RF_BT_SELECT_Write(0);
     
-    //M1_D1_Write(0);
-    //M1_D2_Write(1);
-    //M1_enable_Write(1);
-    M1_IN1_Write(0);
-    M1_IN2_Write(1);
+// ------MOTOR SETUP --------------      
+    int motorSpeed = 20;
     
-    //M2_D1_Write(0);
-    //M2_D2_Write(1);
-    //M2_enable_Write(1);
-    M2_IN1_Write(1);
-    M2_IN2_Write(0);
+    CONTROL_Write(0b00000000); // enable motor
+    Clock_PWM_Start(); // Start clock for PWM
+    PWM_1_Start();
+    PWM_2_Start();
+    PWM_1_WriteCompare(motorSpeed);
+    PWM_2_WriteCompare(motorSpeed*0.96);
     
-    CONTROL_Write(0x03); // 0x03 == 0b00000011
+    //CONTROL_Write(0b00000011); // disable motor
     
-
-    uint16 ADCValue = 0;
+// ------ADC SETUP ----------------      
     ADC_Start();
+    uint16 ADCValue = 0;
+    
     int LED_on = 0;
     while(1) {
-        ADC_StartConvert();
+        ADC_StartConvert(); // start conversion
         int i=0;
         uint16 max = 0;
-        for(i=0;i < 70;i++){
-            
+        for(i=0;i < 70;i++){ // 70 data points, to cover one period of the waveform            
             while(1) {
-                if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) {
-                    ADCValue = ADC_GetResult16(4u);
-                    if (ADCValue > max){
+                if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) { // when conversion completes
+                    ADCValue = ADC_GetResult16(4u); // get result from channel 4
+                    if (ADCValue > max){ // take max over that period
                         max = ADCValue;
                     }    
                     break;
                 }
             }
-        }
-        
+        }    
         if (max < 2500 && LED_on == 0){
             LED_Write(1);  
             LED_on = 1;
@@ -88,31 +82,16 @@ int main()
             LED_Write(0);
             LED_on = 0;
         }
-        /*
-        if (USBUART_GetDeviceAddress() = 0) {
+        
+        if (usbOutput == 1) {
             itoa(max, line, 10);
             usbPutString(line);
             usbPutString("\n");
-        }
-        */
+        }   
     }
-    
-  /* 
-    usbPutString(displaystring);
-    for(;;)
-    {
-        handle_usb();    
-        if (flag_KB_string == 1)
-        {
-            usbPutString(line);
-            flag_KB_string = 0;
-        }        
-    }  
-   */
 }
 //* ========================================
-void usbPutString(char *s)
-{
+void usbPutString(char *s) {
 // !! Assumes that *s is a string with allocated space >=64 chars     
 //  Since USB implementation retricts data packets to 64 chars, this function truncates the
 //  length to 62 char (63rd char is a '!')
@@ -125,16 +104,14 @@ void usbPutString(char *s)
 #endif
 }
 //* ========================================
-void usbPutChar(char c)
-{
+void usbPutChar(char c) {
 #ifdef USE_USB     
     while (USBUART_CDCIsReady() == 0);
     USBUART_PutChar(c);
 #endif    
 }
 //* ========================================
-void handle_usb()
-{
+void handle_usb() {
     // handles input at terminal, echos it back to the terminal
     // turn echo OFF, key emulation: only CR
     // entered string is made available in 'line' and 'flag_KB_string' is set
@@ -144,47 +121,37 @@ void handle_usb()
     uint8 c; 
     
 
-    if (!usbStarted)
-    {
-        if (USBUART_GetConfiguration())
-        {
+    if (!usbStarted) {
+        if (USBUART_GetConfiguration()) {
             USBUART_CDC_Init();
             usbStarted = TRUE;
         }
     }
-    else
-    {
-        if (USBUART_DataIsReady() != 0)
-        {  
+    else {
+        if (USBUART_DataIsReady() != 0) {  
             c = USBUART_GetChar();
 
-            if ((c == 13) || (c == 10))
-            {
-//                if (usbBufCount > 0)
-                {
+            if ((c == 13) || (c == 10)) {
+                if (usbBufCount > 0) {
                     entry[usbBufCount]= '\0';
                     strcpy(line,entry);
                     usbBufCount = 0;
                     flag_KB_string = 1;
                 }
             }
-            else 
-            {
+            else {
                 if (((c == CHAR_BACKSP) || (c == CHAR_DEL) ) && (usbBufCount > 0) )
                     usbBufCount--;
-                else
-                {
-                    if (usbBufCount > (BUF_SIZE-2) ) // one less else strtok triggers a crash
-                    {
+                else {
+                    if (usbBufCount > (BUF_SIZE-2) ) {
                        USBUART_PutChar('!');        
+                    } else {
+                        entry[usbBufCount++] = c;
                     }
-                    else
-                        entry[usbBufCount++] = c;  
                 }  
             }
         }
     }    
 }
-
 
 /* [] END OF FILE */
