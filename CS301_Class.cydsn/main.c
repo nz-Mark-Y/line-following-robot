@@ -58,7 +58,6 @@ int main()
     ADC_Start();
     uint16 ADCValue = 0;
     
-    int LED_on = 0;
     while(1) {
         ADC_StartConvert(); // start conversion
         int i=0;
@@ -74,13 +73,10 @@ int main()
                 }
             }
         }    
-        if (max < 2500 && LED_on == 0){
+        if (max < 2400){
             LED_Write(1);  
-            LED_on = 1;
-        }
-        if(max > 2700 && LED_on == 1){
-            LED_Write(0);
-            LED_on = 0;
+        } else {
+            LED_Write(0);   
         }
         
         if (usbOutput == 1) {
