@@ -71,23 +71,6 @@ GenerateClassCluster=0
 DocumentUniqueId=ONUDHDFY
 
 [Document3]
-DocumentPath=COMSYS301_2013.IntLib
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=
-
-[Document4]
 DocumentPath=light_sensor.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -104,8 +87,25 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=TXETWICT
 
+[Document4]
+DocumentPath=S:\ECE\PCB_Libraries\ECE-Parts\EceParts.DbLib
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=
+
 [Document5]
-DocumentPath=..\..\..\EE209-SMT.PcbLib
+DocumentPath=S:\ECE\PCB_Libraries\ECE-Parts\EceParts.PcbLib
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -122,7 +122,7 @@ GenerateClassCluster=0
 DocumentUniqueId=
 
 [Document6]
-DocumentPath=..\..\..\EE209-SMT.SchLib
+DocumentPath=S:\ECE\PCB_Libraries\ECE-Parts\EceParts.SchLib
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
