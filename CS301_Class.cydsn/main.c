@@ -20,14 +20,39 @@
 #include <project.h>
 #include <ADC_SAR.h>
 #include <CONTROL.h>
+
+#define TOGGLE_LED LED_Write(~LED_Read())
+#define PACKETSIZE 32
+#define RXSTRINGSIZE 255
+
+#define FALSE 0
+#define TRUE 1
+
+#define BUF_SIZE 64 // USBUART fixed buffer size
+
+#define CHAR_NULL '0'
+#define CHAR_BACKSP 0x08
+#define CHAR_DEL 0x7F
+#define CHAR_ENTER 0x0D
+#define LOW_DIGIT '0'
+#define HIGH_DIGIT '9'
+
+#define SOP 0xaa
+//* ========================================
+char rf_string[RXSTRINGSIZE];
+char displaystring[BUF_SIZE] = "UART Lab Exercise 4\n";
+char line[BUF_SIZE], entry[BUF_SIZE];
+uint8 usbBuffer[BUF_SIZE];
+
+void usbPutString(char *s);
+void usbPutChar(char c);
+void handle_rx_binary();
+void handle_rx_ascii();
+void handle_usb();
 //* ========================================
 #include "defines.h"
 #include "vars.h"
-//* ========================================
-void usbPutString(char *s);
-void usbPutChar(char c);
-void handle_usb();
-//* ========================================
+
 int main()
 {
 // --------------------------------    
@@ -49,8 +74,11 @@ int main()
     Clock_PWM_Start(); // Start clock for PWM
     PWM_1_Start();
     PWM_2_Start();
-    PWM_1_WriteCompare(motorSpeed);
-    PWM_2_WriteCompare(motorSpeed*0.96);
+    //PWM_1_WriteCompare(motorSpeed);
+    //PWM_2_WriteCompare(motorSpeed*0.96);
+    PWM_1_WriteCompare(1);
+    PWM_2_WriteCompare(0);
+    
     
     //CONTROL_Write(0b00000011); // disable motor
     
@@ -58,7 +86,15 @@ int main()
     ADC_Start();
     uint16 ADCValue = 0;
     
+// ------UART_RF Setup------------- 
+    USBUART_Start(0,USBUART_5V_OPERATION);
+    UART_Start();
+    isrRF_RX_Start();
+    usbPutString(displaystring);
+    
+    
     while(1) {
+        /*
         ADC_StartConvert(); // start conversion
         int i=0;
         uint16 max = 0;
@@ -84,6 +120,13 @@ int main()
             usbPutString(line);
             usbPutString("\n");
         }   
+        */
+        if (flag_rx == 1){
+            char data;
+            data = UART_GetChar();
+            usbPutChar(data);
+            flag_rx = 0;
+        }  
     }
 }
 //* ========================================
