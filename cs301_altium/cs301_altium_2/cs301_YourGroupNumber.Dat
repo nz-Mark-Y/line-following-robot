@@ -1,0 +1,16 @@
+Field=Comment~String~Comment~100|Field=Description~String~Description~100|Field=Designator~String~Designator~100|Field=Footprint~String~Footprint~100|Field=LibRef~String~LibRef~100|Field=Quantity~Integer~Quantity~100|ReportField=Currency~<none>|ReportField=ProductionQuantity~1|ReportField=ProjectFileName~cs301_YourGroupNumber.PrjPCB|ReportField=ProjectFullPath~C:\Users\sbec582\CS301\uoa-cs301-2017-group06\cs301_altium\cs301_altium_2\cs301_YourGroupNumber.PrjPCB|ReportField=Title~Bill of Materials For Project [cs301_YourGroupNumber.PrjPCB] (No PCB Document Selected)|ReportField=TotalQuantity~92|ReportField=ReportTime~11:04:18 a.m.|ReportField=ReportDate~25/08/2017|ReportField=ReportDateTime~25/08/2017 11:04:18 a.m.|ReportField=OutputName~Bill of Materials|ReportField=OutputType~BOM_PartType|ReportField=GeneratorName~BOM|ReportField=GeneratorDescription~Bill of Materials|ReportField=VariantName~None|ReportField=Address1~|ReportField=Address2~|ReportField=Address3~|ReportField=Address4~|ReportField=Application_BuildNumber~|ReportField=ApprovedBy~|ReportField=Author~|ReportField=CheckedBy~|ReportField=CompanyName~|ReportField=CurrentDate~25/08/2017|ReportField=CurrentTime~11:02:27 a.m.|ReportField=Date~|ReportField=DocumentFullPathAndName~C:\Users\sbec582\CS301\uoa-cs301-2017-group06\cs301_altium\cs301_altium_2\cs301_YourGroupNumber.SchDoc|ReportField=DocumentName~cs301_YourGroupNumber.SchDoc|ReportField=DocumentNumber~|ReportField=DrawnBy~|ReportField=Engineer~|ReportField=ImagePath~|ReportField=ModifiedDate~24/08/2017|ReportField=Organization~|ReportField=ProjectName~cs301_YourGroupNumber.PrjPCB|ReportField=Revision~|ReportField=Rule~|ReportField=SheetNumber~|ReportField=SheetTotal~|ReportField=Time~|ReportField=Title~|ReportField=DataSourceFileName~cs301_YourGroupNumber.PrjPCB|ReportField=DataSourceFullPath~C:\Users\sbec582\CS301\uoa-cs301-2017-group06\cs301_altium\cs301_altium_2\cs301_YourGroupNumber.PrjPCB
+2 Way|HEADER POLARISED 2WAY TH|BatteryIn, Battery Out, MotorLeftTop, MotorRightTop, supply|ECE-600102STTH|CON000001|5
+22uF|Polarized Capacitor (Radial)|C1|ECE-CAPAE6.3X5.4SM|CAP 22uF/35V SM|1
+1500pF|CAP CER 1500pF 50V X7R SM0603|C1_LS1, C1_LS2, C1_LS3, C1_LS4, C1_LS5, C1_LS6|ECE-CAPC1608-0603SM|CAP000613|6
+0.1uF|Capacitor|C2|ECE-CAPC2012-0805SM|CAP 0805 SM|1
+100nF|CAP CER 100nF 25V X7R SM0603|C2_LS1, C2_LS2, C2_LS3, C2_LS4, C2_LS5, C2_LS6|ECE-CAPC1608-0603SM|CAP000624|6
+LED||D1, D2, D3|LED0.1/5MM|LED|3
+26PIN||J9, J10|SIP26|26PIN|2
+3 Way|HEADER POLARISED 3WAY TH|MotorLeftBottom, MotorRightBottom, RFReceiver|ECE-600103STTH|CON000002|3
+Phototransistor|HEADER POLARISED 4WAY TH|P1_LS1, P1_LS2, P1_LS3, P1_LS4, P1_LS5, P1_LS6|ECE-600104STTH|CON000003|6
+4 Way|HEADER POLARISED 4WAY TH|QuadratureEncoder|ECE-600104STTH|CON000003|1
+100k|Resistor|R1, R1_LS1, R1_LS2, R1_LS3, R1_LS4, R1_LS5, R1_LS6, R2, R2_LS1, R2_LS2, R2_LS3, R2_LS4, R2_LS5, R2_LS6, R3, R3_LS1, R3_LS2, R3_LS3, R3_LS4, R3_LS5, R3_LS6, R4, R4_LS1, R4_LS2, R4_LS3, R4_LS4, R4_LS5, R4_LS6, R8_LS1, R8_LS2, R8_LS3, R8_LS4, R8_LS5, R8_LS6|J1-0603|Res3|34
+1|Resistor|R5, R6, R7|J1-0603|Res3|3
+1M|Resistor|R6_LS1, R6_LS2, R6_LS3, R6_LS4, R6_LS5, R6_LS6, R7_LS1, R7_LS2, R7_LS3, R7_LS4, R7_LS5, R7_LS6|J1-0603|Res3|12
+SW DIP-2|DIP Switch, 2 Position, SPST|S1, S2, S3|DIP-4|SW DIP-2|3
+60MHz Opamp||U1_LS1, U1_LS2, U1_LS3, U1_LS4, U1_LS5, U1_LS6|SO-8|LT6221|6
