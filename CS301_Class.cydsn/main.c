@@ -139,15 +139,34 @@ int main()
                 memcpy(rf_string_complete, rf_string, strlen(rf_string)+1);
                 count = 0;
                 struct data_main* data_pointer = (struct data_main*) rf_string_complete[0];
-
-                itoa((*data_pointer).rssi, line, 10);
-                usbPutString(line);
-                usbPutString("\n\r");
-                /*
-                itoa(voltage, entry, 10);
-                usbPutString(entry);
-                usbPutString(" mV\n");
-                */
+                int8 strength = (*data_pointer).rssi;
+                int8 xpos = (*data_pointer).robot_xpos;
+                int8 ypos = (*data_pointer).robot_ypos;
+                //printf("%d",strength);
+                
+                if(strength != 0){
+                    itoa(voltage, entry, 10);
+                    usbPutString("Battery Voltage: ");
+                    usbPutString(entry);
+                    usbPutString(" mV\n\r");
+                }
+                if (strength != 0){
+                    itoa(strength, line, 10);
+                    usbPutString("RSSI: ");
+                    usbPutString(line);
+                    usbPutString("\n\r");
+                    
+                    itoa(xpos, line, 10);
+                    usbPutString("XPOS: ");
+                    usbPutString(line);
+                    usbPutString("\n\r");
+                    
+                    itoa(ypos, line, 10);
+                    usbPutString("YPOS: ");
+                    usbPutString(line);
+                    usbPutString("\n\r");
+                }
+   
             }
             data = UART_GetChar();
             rf_string[count] = data;
