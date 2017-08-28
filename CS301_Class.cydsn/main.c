@@ -40,9 +40,11 @@
 #define SOP 0xaa
 //* ========================================
 char rf_string[RXSTRINGSIZE];
+char rf_string_complete[RXSTRINGSIZE];
 char displaystring[BUF_SIZE] = "UART Lab Exercise 4\n";
 char line[BUF_SIZE], entry[BUF_SIZE];
 uint8 usbBuffer[BUF_SIZE];
+int count = 0;
 
 void usbPutString(char *s);
 void usbPutChar(char c);
@@ -64,7 +66,7 @@ int main()
     USBUART_Start(0,USBUART_5V_OPERATION);
 #endif   
 
-    int usbOutput = 0;
+    int usbOutput = 1;
     RF_BT_SELECT_Write(0);
     
 // ------MOTOR SETUP --------------      
@@ -79,7 +81,6 @@ int main()
     PWM_1_WriteCompare(1);
     PWM_2_WriteCompare(0);
     
-    
     //CONTROL_Write(0b00000011); // disable motor
     
 // ------ADC SETUP ----------------      
@@ -90,8 +91,7 @@ int main()
     USBUART_Start(0,USBUART_5V_OPERATION);
     UART_Start();
     isrRF_RX_Start();
-    usbPutString(displaystring);
-    
+    usbPutString(displaystring);   
     
     while(1) {
         /*
@@ -107,26 +107,54 @@ int main()
                     }    
                     break;
                 }
-            }
-        }    
+            }               
+        } 
+        /*
         if (max < 2400){
             LED_Write(1);  
         } else {
             LED_Write(0);   
         }
-        
+    
         if (usbOutput == 1) {
             itoa(max, line, 10);
             usbPutString(line);
             usbPutString("\n");
-        }   
-        */
+        }
+        */  
+        
+        ADC_StartConvert();
+        int ADCValue = 0;
+        while (1) {
+            if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) {
+                ADCValue = ADC_GetResult16(4u);
+                break;
+            }
+        }
+        int voltage = (ADCValue*8*1000)/4096;
+       
         if (flag_rx == 1){
-            char data;
+            char data;           
+            if (count == PACKETSIZE) {
+                memcpy(rf_string_complete, rf_string, strlen(rf_string)+1);
+                count = 0;
+                struct data_main* data_pointer = (struct data_main*) rf_string_complete[0];
+
+                itoa((*data_pointer).rssi, line, 10);
+                usbPutString(line);
+                usbPutString("\n\r");
+                /*
+                itoa(voltage, entry, 10);
+                usbPutString(entry);
+                usbPutString(" mV\n");
+                */
+            }
             data = UART_GetChar();
-            usbPutChar(data);
+            rf_string[count] = data;
+            count++;
             flag_rx = 0;
-        }  
+        } 
+       
     }
 }
 //* ========================================

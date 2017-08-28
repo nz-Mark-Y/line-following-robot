@@ -24,7 +24,6 @@ uint8 flag_ts_update = 0;
 uint8 flag_ts_speed = 0;
 uint8 flag_ts_display = 0;
 
-
 uint8 flag_rx = 0;
 uint8 flag_packet = 0;
 uint8 flag_KB_string = 0;
