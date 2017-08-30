@@ -42,9 +42,11 @@
 char rf_string[RXSTRINGSIZE];
 char rf_string_complete[RXSTRINGSIZE];
 char displaystring[BUF_SIZE] = "UART Lab Exercise 4\n";
-char line[BUF_SIZE], entry[BUF_SIZE];
+char line[BUF_SIZE], entry[BUF_SIZE], test[BUF_SIZE];
 uint8 usbBuffer[BUF_SIZE];
+
 int count = 0;
+int startCount = 0;
 
 void usbPutString(char *s);
 void usbPutChar(char c);
@@ -78,7 +80,7 @@ int main()
     PWM_2_Start();
     //PWM_1_WriteCompare(motorSpeed);
     //PWM_2_WriteCompare(motorSpeed*0.96);
-    PWM_1_WriteCompare(1);
+    PWM_1_WriteCompare(7);
     PWM_2_WriteCompare(0);
     
     //CONTROL_Write(0b00000011); // disable motor
@@ -109,7 +111,7 @@ int main()
                 }
             }               
         } 
-        /*
+      
         if (max < 2400){
             LED_Write(1);  
         } else {
@@ -123,6 +125,7 @@ int main()
         }
         */  
         
+
         ADC_StartConvert();
         int ADCValue = 0;
         while (1) {
@@ -131,26 +134,26 @@ int main()
                 break;
             }
         }
+        
         int voltage = (ADCValue*8*1000)/4096;
        
-        if (flag_rx == 1){
+        if (flag_rx == 1) {
             char data;           
-            if (count == PACKETSIZE) {
-                memcpy(rf_string_complete, rf_string, strlen(rf_string)+1);
+            if (count > PACKETSIZE) {
+                memcpy(&system_state, rf_string, PACKETSIZE);
                 count = 0;
-                struct data_main* data_pointer = (struct data_main*) rf_string_complete[0];
-                int8 strength = (*data_pointer).rssi;
-                int8 xpos = (*data_pointer).robot_xpos;
-                int8 ypos = (*data_pointer).robot_ypos;
-                //printf("%d",strength);
                 
-                if(strength != 0){
+                int8 strength = system_state.rssi;
+                int16 xpos = system_state.robot_xpos;
+                int16 ypos = system_state.robot_ypos;
+                int16 orient = system_state.robot_orientation;
+                
+                if (orient > 0) {
                     itoa(voltage, entry, 10);
                     usbPutString("Battery Voltage: ");
                     usbPutString(entry);
                     usbPutString(" mV\n\r");
-                }
-                if (strength != 0){
+                    
                     itoa(strength, line, 10);
                     usbPutString("RSSI: ");
                     usbPutString(line);
@@ -165,15 +168,28 @@ int main()
                     usbPutString("YPOS: ");
                     usbPutString(line);
                     usbPutString("\n\r");
+                    
+                    itoa(orient, test, 10);
+                    usbPutString("Orientation: ");
+                    usbPutString(test);
+                    usbPutString("\n\r");
                 }
-   
             }
+            
             data = UART_GetChar();
-            rf_string[count] = data;
+            if (data == SOP) {
+                startCount++;
+                if (startCount == 2) {
+                    count = -1;
+                    startCount = 0;
+                }                  
+            } 
+            if (count >= 0) {
+                rf_string[count] = data;
+            }
             count++;
             flag_rx = 0;
-        } 
-       
+        }     
     }
 }
 //* ========================================

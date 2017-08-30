@@ -28,7 +28,7 @@ uint8 flag_rx = 0;
 uint8 flag_packet = 0;
 uint8 flag_KB_string = 0;
 
-uint8 dataready_flag =0;
+uint8 dataready_flag = 0;
 
 uint8 flag_rf_transmission_active = UNKNOWN; // [TRUE if receieving data, FALSE is not, UNKNOWN at startup]
 //* ========================================
