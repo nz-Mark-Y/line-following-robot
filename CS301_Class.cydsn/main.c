@@ -22,7 +22,6 @@
 #include <CONTROL.h>
 
 #define TOGGLE_LED LED_Write(~LED_Read())
-#define PACKETSIZE 32
 #define RXSTRINGSIZE 255
 
 #define FALSE 0
@@ -47,7 +46,11 @@ uint8 usbBuffer[BUF_SIZE];
 
 int count = 0;
 int startCount = 0;
+int usbOutput = 1;
 
+int sensorIsUnderLine(int sensorNum);
+int getBatteryVoltage();
+int handleRadioData();
 void usbPutString(char *s);
 void usbPutChar(char c);
 void handle_rx_binary();
@@ -64,11 +67,7 @@ int main()
     CYGlobalIntEnable;
 
 // ------USB SETUP ----------------    
-#ifdef USE_USB    
-    USBUART_Start(0,USBUART_5V_OPERATION);
-#endif   
-
-    int usbOutput = 1;
+    USBUART_Start(0,USBUART_5V_OPERATION);  
     RF_BT_SELECT_Write(0);
     
 // ------MOTOR SETUP --------------      
@@ -78,16 +77,13 @@ int main()
     Clock_PWM_Start(); // Start clock for PWM
     PWM_1_Start();
     PWM_2_Start();
-    //PWM_1_WriteCompare(motorSpeed);
-    //PWM_2_WriteCompare(motorSpeed*0.96);
-    PWM_1_WriteCompare(7);
-    PWM_2_WriteCompare(0);
+    PWM_1_WriteCompare(motorSpeed);
+    PWM_2_WriteCompare(motorSpeed*0.96);
     
     //CONTROL_Write(0b00000011); // disable motor
     
 // ------ADC SETUP ----------------      
     ADC_Start();
-    uint16 ADCValue = 0;
     
 // ------UART_RF Setup------------- 
     USBUART_Start(0,USBUART_5V_OPERATION);
@@ -96,101 +92,114 @@ int main()
     usbPutString(displaystring);   
     
     while(1) {
-        /*
-        ADC_StartConvert(); // start conversion
-        int i=0;
-        uint16 max = 0;
-        for(i=0;i < 70;i++){ // 70 data points, to cover one period of the waveform            
-            while(1) {
-                if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) { // when conversion completes
-                    ADCValue = ADC_GetResult16(4u); // get result from channel 4
-                    if (ADCValue > max){ // take max over that period
-                        max = ADCValue;
-                    }    
-                    break;
-                }
-            }               
-        } 
-      
-        if (max < 2400){
-            LED_Write(1);  
-        } else {
-            LED_Write(0);   
+        int lightSensor4 = sensorIsUnderLine(4u);
+        int voltage = getBatteryVoltage();
+        int completeStructure = handleRadioData();
+        if (completeStructure == 1) {
+            int8 strength = system_state.rssi;
+            int16 xpos = system_state.robot_xpos;
+            int16 ypos = system_state.robot_ypos;
+            int16 orient = system_state.robot_orientation;
+                
+            if (orient > 0) {                   
+                itoa(strength, line, 10);
+                usbPutString("RSSI: ");
+                usbPutString(line);
+                usbPutString("\n\r");
+                
+                itoa(xpos, line, 10);
+                usbPutString("XPOS: ");
+                usbPutString(line);
+                usbPutString("\n\r");
+                
+                itoa(ypos, line, 10);
+                usbPutString("YPOS: ");
+                usbPutString(line);
+                usbPutString("\n\r");
+                
+                itoa(orient, test, 10);
+                usbPutString("Orientation: ");
+                usbPutString(test);
+                usbPutString("\n\r");
+            }
         }
-    
-        if (usbOutput == 1) {
-            itoa(max, line, 10);
-            usbPutString(line);
-            usbPutString("\n");
-        }
-        */  
-        
+    }
+}
 
-        ADC_StartConvert();
+//* ========================================
+int sensorIsUnderLine(int sensorNum) {
+    ADC_StartConvert(); // start conversion
+    int returnValue = 0;
+    int i = 0;
+    uint16 ADCValue = 0;
+    uint16 max = 0;
+    for(i=0;i < 70;i++){ // 70 data points, to cover one period of the waveform            
+        while(1) {
+            if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) { // when conversion completes
+                ADCValue = ADC_GetResult16(sensorNum); // get result from channel 4
+                if (ADCValue > max){ // take max over that period
+                    max = ADCValue;
+                }    
+                break;
+            }
+        }               
+    }
+  
+    if (max < 2400){
+        LED_Write(1);
+        returnValue = 1;
+    } else {
+        LED_Write(0);   
+        returnValue = 0;
+    }
+
+    if (usbOutput == 1) {
+        itoa(max, line, 10);
+        usbPutString(line);
+        usbPutString("\n");
+    }
+    return returnValue;
+}
+//* ========================================
+int getBatteryVoltage() {
+   ADC_StartConvert();
         int ADCValue = 0;
         while (1) {
             if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) {
                 ADCValue = ADC_GetResult16(4u);
                 break;
             }
+        } 
+    int voltage = (ADCValue*8*1000)/4096;
+    return voltage;
+}
+//* ========================================
+int handleRadioData() {
+    int rxReceived = 0;
+    if (flag_rx == 1) {
+        char data;           
+        if (count > PACKETSIZE) {
+            memcpy(&system_state, rf_string, PACKETSIZE);
+            count = 0;
+                
+        rxReceived = 1;    
         }
         
-        int voltage = (ADCValue*8*1000)/4096;
-       
-        if (flag_rx == 1) {
-            char data;           
-            if (count > PACKETSIZE) {
-                memcpy(&system_state, rf_string, PACKETSIZE);
-                count = 0;
-                
-                int8 strength = system_state.rssi;
-                int16 xpos = system_state.robot_xpos;
-                int16 ypos = system_state.robot_ypos;
-                int16 orient = system_state.robot_orientation;
-                
-                if (orient > 0) {
-                    itoa(voltage, entry, 10);
-                    usbPutString("Battery Voltage: ");
-                    usbPutString(entry);
-                    usbPutString(" mV\n\r");
-                    
-                    itoa(strength, line, 10);
-                    usbPutString("RSSI: ");
-                    usbPutString(line);
-                    usbPutString("\n\r");
-                    
-                    itoa(xpos, line, 10);
-                    usbPutString("XPOS: ");
-                    usbPutString(line);
-                    usbPutString("\n\r");
-                    
-                    itoa(ypos, line, 10);
-                    usbPutString("YPOS: ");
-                    usbPutString(line);
-                    usbPutString("\n\r");
-                    
-                    itoa(orient, test, 10);
-                    usbPutString("Orientation: ");
-                    usbPutString(test);
-                    usbPutString("\n\r");
-                }
-            }
-            
-            data = UART_GetChar();
-            if (data == SOP) {
-                startCount++;
-                if (startCount == 2) {
-                    count = -1;
-                    startCount = 0;
-                }                  
-            } 
-            if (count >= 0) {
-                rf_string[count] = data;
-            }
-            count++;
-            flag_rx = 0;
-        }     
+        data = UART_GetChar();
+        if (data == SOP) {
+            startCount++;
+            if (startCount == 2) {
+                count = -1;
+                startCount = 0;
+            }                  
+        } 
+        if (count >= 0) {
+            rf_string[count] = data;
+        }
+        count++;
+        flag_rx = 0;
     }
+    return rxReceived;
 }
 //* ========================================
 void usbPutString(char *s) {
