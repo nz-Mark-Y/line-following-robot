@@ -53,6 +53,11 @@ int maxValue[] = {0,0,0,0,0,0,0};             //max value sensed by each light s
 int ADCValue[] = {0,0,0,0,0,0,0};             //current ADC value from each light sensor (ignore index value 0)
 int isUnderLine[] = {0,0,0,0,0,0,0};       //boolean value for determining whether or not a light sensor is under the line or not (ignore index value 0)
 
+//Initialising motor speed values
+int motor1Speed = 20;
+int motor2Speed = 20*0.96; 
+
+
 void sensorIsUnderLine(int sensorNum);
 int getBatteryVoltage();
 int handleRadioData();
@@ -75,15 +80,14 @@ int main()
     USBUART_Start(0,USBUART_5V_OPERATION);  
     RF_BT_SELECT_Write(0);
     
-// ------MOTOR SETUP --------------      
-    int motorSpeed = 20;
+// ------MOTOR SETUP --------------       
     
     CONTROL_Write(0b00000000); // enable motor
     Clock_PWM_Start(); // Start clock for PWM
     PWM_1_Start();
     PWM_2_Start();
-    PWM_1_WriteCompare(motorSpeed);
-    PWM_2_WriteCompare(motorSpeed*0.96);
+    PWM_1_WriteCompare(motor1Speed);
+    PWM_2_WriteCompare(motor2Speed);
     
     //CONTROL_Write(0b00000011); // disable motor
     
@@ -277,4 +281,41 @@ void handle_usb() {
     }    
 }
 
+//function havent been added to main-while loop
+//checks the value in the light_sensore array and move th robot accordingly
+void check_array() {  
+    //both sensors are on the line
+    if (isUnderLine[1] == 1 && isUnderLine[2] == 1) {
+        //move forward as per usual
+        PWM_1_WriteCompare(motor1Speed);
+        PWM_2_WriteCompare(motor2Speed);
+    }
+    //sensor 1 is on the line 
+    //sensor 2 off the line
+    else if (isUnderLine[1] == 1 && isUnderLine[2] == 0) {
+        //decrease motor1 speed
+        //increase motor2 speed
+        motor1Speed = motor1Speed + 1;
+        motor2Speed = motor2Speed - 1;        
+        PWM_1_WriteCompare(motor1Speed);
+        PWM_2_WriteCompare(motor2Speed);
+    }
+    //sensor 1 off the line
+    //sensor 2 on the line
+    else if (isUnderLine[1] == 0 && isUnderLine[2] == 1) {
+        //increase motor1 speed
+        //decrease motor2 speed
+        motor1Speed = motor1Speed - 1;
+        motor2Speed = motor2Speed + 1;  
+        PWM_1_WriteCompare(motor1Speed);
+        PWM_2_WriteCompare(motor2Speed);
+    }
+    //both sensors off the line
+    else if (isUnderLine[1] == 0 && isUnderLine[2] == 0) {
+        //stop both motors
+        PWM_1_WriteCompare(127);
+        PWM_2_WriteCompare(127);        
+    }
+}
+   
 /* [] END OF FILE */
