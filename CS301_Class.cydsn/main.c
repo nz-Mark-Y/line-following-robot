@@ -48,7 +48,12 @@ int count = 0;
 int startCount = 0;
 int usbOutput = 1;
 
-int sensorIsUnderLine(int sensorNum);
+//Arrays for light sensors, index value 0 is not used (makes it easier to link index number to sensor number)
+int maxValue[] = {0,0,0,0,0,0,0};             //max value sensed by each light sensor (ignore index value 0)
+int ADCValue[] = {0,0,0,0,0,0,0};             //current ADC value from each light sensor (ignore index value 0)
+int isUnderLine[] = {0,0,0,0,0,0,0};       //boolean value for determining whether or not a light sensor is under the line or not (ignore index value 0)
+
+void sensorIsUnderLine(int sensorNum);
 int getBatteryVoltage();
 int handleRadioData();
 void usbPutString(char *s);
@@ -92,7 +97,20 @@ int main()
     usbPutString(displaystring);   
     
     while(1) {
-        int lightSensor4 = sensorIsUnderLine(4u);
+        //Update each sensor values of maxValue, ADCValue and isUnderLine
+        for(int m = 1; m < 7; m++){
+            sensorIsUnderLine(m);
+        }
+        
+        //Print each sensor values of maxValues
+        for(int m = 1; m < 7; m++){
+            if (usbOutput == 1) {
+                itoa(maxValue[m], line, 10);
+                usbPutString(line);
+                usbPutString("\n");
+        }
+        
+    }
         int voltage = getBatteryVoltage();
         int completeStructure = handleRadioData();
         if (completeStructure == 1) {
@@ -127,38 +145,32 @@ int main()
 }
 
 //* ========================================
-int sensorIsUnderLine(int sensorNum) {
+void sensorIsUnderLine(int sensorNum) {
     ADC_StartConvert(); // start conversion
-    int returnValue = 0;
     int i = 0;
-    uint16 ADCValue = 0;
-    uint16 max = 0;
+    ADCValue[sensorNum] = 0;
+    maxValue[sensorNum] = 0;
     for(i=0;i < 70;i++){ // 70 data points, to cover one period of the waveform            
         while(1) {
             if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) { // when conversion completes
-                ADCValue = ADC_GetResult16(sensorNum); // get result from channel 4
-                if (ADCValue > max){ // take max over that period
-                    max = ADCValue;
+                ADCValue[sensorNum] = ADC_GetResult16(sensorNum); // get result from channel 4
+                if (ADCValue[sensorNum] > maxValue[sensorNum]){ // take max over that period
+                    maxValue[sensorNum] = ADCValue[sensorNum];
                 }    
                 break;
             }
         }               
     }
   
-    if (max < 2400){
+    if (maxValue[sensorNum] < 2400){
         LED_Write(1);
-        returnValue = 1;
+        isUnderLine[sensorNum] = 1;     //Under the line
     } else {
         LED_Write(0);   
-        returnValue = 0;
+        isUnderLine[sensorNum] = 0;     //Not under the line
     }
-
-    if (usbOutput == 1) {
-        itoa(max, line, 10);
-        usbPutString(line);
-        usbPutString("\n");
-    }
-    return returnValue;
+    
+    return;
 }
 //* ========================================
 int getBatteryVoltage() {
