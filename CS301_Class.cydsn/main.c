@@ -41,8 +41,8 @@
 char rf_string[RXSTRINGSIZE];
 char rf_string_complete[RXSTRINGSIZE];
 char displaystring[BUF_SIZE] = "UART Lab Exercise 4\n";
-char testString[BUF_SIZE];
-char line[BUF_SIZE], entry[BUF_SIZE], test[BUF_SIZE];
+char testString[BUF_SIZE], testString1[BUF_SIZE], testString2[BUF_SIZE], testString3[BUF_SIZE], testString4[BUF_SIZE], testString5[BUF_SIZE], testString6[BUF_SIZE];
+char line[BUF_SIZE], entry[BUF_SIZE], test[BUF_SIZE], line1[BUF_SIZE], line2[BUF_SIZE],  line3[BUF_SIZE],  line4[BUF_SIZE],  line5[BUF_SIZE],  line6[BUF_SIZE];
 uint8 usbBuffer[BUF_SIZE];
 
 int count = 0;
@@ -54,6 +54,7 @@ int motor2Distance = 0; //distances are in millimetres
 
 //Arrays for light sensors, index value 0 is not used (makes it easier to link index number to sensor number)
 int maxValue[] = {0,0,0,0,0,0,0};             //max value sensed by each light sensor (ignore index value 0)
+int minValue[] = {0,0,0,0,0,0,0};             //min value sensed by each light sensor (ignore index value 0)
 int ADCValue[] = {0,0,0,0,0,0,0};             //current ADC value from each light sensor (ignore index value 0)
 int isUnderLine[] = {0,0,0,0,0,0,0};       //boolean value for determining whether or not a light sensor is under the line or not (ignore index value 0)
 
@@ -116,18 +117,74 @@ int main()
             sensorIsUnderLine(m);
         }
         
+        /*
         //Print each sensor values of maxValues
         for(m = 1; m < 7; m++){
             if (usbOutput == 1) {
-                itoa(maxValue[m], line, 10);
+                itoa((maxValue[m]-minValue[m]), line, 10);
                 itoa(m, testString, 10); 
                 usbPutString("Light Sensor ");
                 usbPutString(testString);
                 usbPutString(" : ");
                 usbPutString(line);
-                usbPutString("\n");
+                usbPutString("\n\r");
             }
         }
+        */
+        
+        //LS1
+        itoa((maxValue[1]-minValue[1]), line1, 10);
+        itoa(1, testString1, 10); 
+        usbPutString("Light Sensor ");
+        usbPutString(testString1);
+        usbPutString(" : ");
+        usbPutString(line1);
+        usbPutString("\n\r");
+        
+        //LS2
+        itoa((maxValue[2]-minValue[2]), line2, 10);
+        itoa(2, testString2, 10); 
+        usbPutString("Light Sensor ");
+        usbPutString(testString2);
+        usbPutString(" : ");
+        usbPutString(line2);
+        usbPutString("\n\r");
+        
+        //LS3
+        itoa((maxValue[3]-minValue[3]), line3, 10);
+        itoa(3, testString3, 10); 
+        usbPutString("Light Sensor ");
+        usbPutString(testString3);
+        usbPutString(" : ");
+        usbPutString(line3);
+        usbPutString("\n\r");
+        
+        //LS4
+        itoa((maxValue[4]-minValue[4]), line4, 10);
+        itoa(4, testString4, 10); 
+        usbPutString("Light Sensor ");
+        usbPutString(testString4);
+        usbPutString(" : ");
+        usbPutString(line4);
+        usbPutString("\n\r");
+        
+        //LS5
+        itoa((maxValue[5]-minValue[5]), line5, 10);
+        itoa(5, testString5, 10); 
+        usbPutString("Light Sensor ");
+        usbPutString(testString5);
+        usbPutString(" : ");
+        usbPutString(line5);
+        usbPutString("\n\r");
+        
+        //LS6
+        itoa((maxValue[6]-minValue[6]), line6, 10);
+        itoa(6, testString6, 10); 
+        usbPutString("Light Sensor ");
+        usbPutString(testString6);
+        usbPutString(" : ");
+        usbPutString(line6);
+        usbPutString("\n\r");
         
         int voltage = getBatteryVoltage();
         int completeStructure = handleRadioData();
@@ -169,13 +226,16 @@ void sensorIsUnderLine(int sensorNum) {
     int i = 0;
     ADCValue[sensorNum] = 0;
     maxValue[sensorNum] = 0;
+    minValue[sensorNum] = 4096;
     for(i=0;i < 70;i++){ // 70 data points, to cover one period of the waveform            
         while(1) {
             if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) { // when conversion completes
-                ADCValue[sensorNum] = ADC_GetResult16(sensorNum); // get result from channel 4
+                ADCValue[sensorNum] = ADC_GetResult16(sensorNum); // get result from channel
                 if (ADCValue[sensorNum] > maxValue[sensorNum]){ // take max over that period
                     maxValue[sensorNum] = ADCValue[sensorNum];
-                }    
+                } else if(ADCValue[sensorNum] < minValue[sensorNum]){
+                    minValue[sensorNum] = ADCValue[sensorNum];  // take min over that period
+                }
                 break;
             }
         }               
