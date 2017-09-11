@@ -48,6 +48,9 @@ int count = 0;
 int startCount = 0;
 int usbOutput = 1;
 
+int motor1Distance = 0; //global variables that keep track of distance travelled by robot's two wheels
+int motor2Distance = 0; //distances are in millimetres
+
 //Arrays for light sensors, index value 0 is not used (makes it easier to link index number to sensor number)
 int maxValue[] = {0,0,0,0,0,0,0};             //max value sensed by each light sensor (ignore index value 0)
 int ADCValue[] = {0,0,0,0,0,0,0};             //current ADC value from each light sensor (ignore index value 0)
@@ -66,6 +69,7 @@ void usbPutChar(char c);
 void handle_rx_binary();
 void handle_rx_ascii();
 void handle_usb();
+void calculateDistanceTravelled();
 //* ========================================
 #include "defines.h"
 #include "vars.h"
@@ -112,9 +116,9 @@ int main()
                 itoa(maxValue[m], line, 10);
                 usbPutString(line);
                 usbPutString("\n");
-        }
+            }
         
-    }
+        }
         int voltage = getBatteryVoltage();
         int completeStructure = handleRadioData();
         if (completeStructure == 1) {
@@ -145,6 +149,7 @@ int main()
                 usbPutString("\n\r");
             }
         }
+    calculateDistanceTravelled();
     }
 }
 
@@ -317,5 +322,15 @@ void check_array() {
         PWM_2_WriteCompare(127);        
     }
 }
-   
+
+//uses quadrature reading to determine the distance travelled by robot's two wheels
+void calculateDistanceTravelled(){
+    
+    //append distance value to global distance variable
+    motor1Distance = motor1Distance + (QuadDec_M1_GetCounter()*0.8887);//*202.6327/4/3/19
+    motor2Distance = motor2Distance + (QuadDec_M2_GetCounter()*0.8887);
+    
+    QuadDec_M1_SetCounter(0);//reset counter after reading from it
+    QuadDec_M2_SetCounter(0);
+}    
 /* [] END OF FILE */
