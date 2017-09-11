@@ -431,5 +431,15 @@ void calculateDistanceTravelled(){
     
     QuadDec_M1_SetCounter(0);//reset counter after reading from it
     QuadDec_M2_SetCounter(0);
+    
+    itoa(motor1Distance, line, 10);
+    usbPutString("motor1Distance: ");
+    usbPutString(line);
+    usbPutString("\n\r");
+    
+    itoa(motor2Distance, line, 10);
+    usbPutString("motor2Distance: ");
+    usbPutString(line);
+    usbPutString("\n\r");
 }    
 /* [] END OF FILE */
