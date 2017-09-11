@@ -254,7 +254,7 @@ int getBatteryVoltage() {
                 break;
             }
         } 
-    int voltage = (ADCValue*8*1000)/4096;  
+    int voltage = (ADCValue*10*1000)/4096;  
     return voltage;
 }
 //* ========================================
