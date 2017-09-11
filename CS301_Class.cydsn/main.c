@@ -66,7 +66,7 @@ int motor2Speed = 20*0.96;
 int turningLeft = 0;
 int turningRight = 0;
 
-
+void printLightSensorValues();
 void sensorIsUnderLine(int sensorNum);
 int getBatteryVoltage();
 int handleRadioData();
@@ -80,8 +80,7 @@ void calculateDistanceTravelled();
 #include "defines.h"
 #include "vars.h"
 
-int main()
-{
+int main() {
 // --------------------------------    
 // ----- INITIALIZATIONS ----------
     CYGlobalIntEnable;
@@ -116,77 +115,15 @@ int main()
         for (m = 1; m < 7; m++){
             sensorIsUnderLine(m);
         }
-        
-        /*
-        //Print each sensor values of maxValues
-        for(m = 1; m < 7; m++){
-            if (usbOutput == 1) {
-                itoa((maxValue[m]-minValue[m]), line, 10);
-                itoa(m, testString, 10); 
-                usbPutString("Light Sensor ");
-                usbPutString(testString);
-                usbPutString(" : ");
-                usbPutString(line);
-                usbPutString("\n\r");
-            }
-        }
-        */
-        
-        //LS1
-        itoa((maxValue[1]-minValue[1]), line1, 10);
-        itoa(1, testString1, 10); 
-        usbPutString("Light Sensor ");
-        usbPutString(testString1);
-        usbPutString(" : ");
-        usbPutString(line1);
-        usbPutString("\n\r");
-        
-        //LS2
-        itoa((maxValue[2]-minValue[2]), line2, 10);
-        itoa(2, testString2, 10); 
-        usbPutString("Light Sensor ");
-        usbPutString(testString2);
-        usbPutString(" : ");
-        usbPutString(line2);
-        usbPutString("\n\r");
-        
-        //LS3
-        itoa((maxValue[3]-minValue[3]), line3, 10);
-        itoa(3, testString3, 10); 
-        usbPutString("Light Sensor ");
-        usbPutString(testString3);
-        usbPutString(" : ");
-        usbPutString(line3);
-        usbPutString("\n\r");
-        
-        //LS4
-        itoa((maxValue[4]-minValue[4]), line4, 10);
-        itoa(4, testString4, 10); 
-        usbPutString("Light Sensor ");
-        usbPutString(testString4);
-        usbPutString(" : ");
-        usbPutString(line4);
-        usbPutString("\n\r");
-        
-        //LS5
-        itoa((maxValue[5]-minValue[5]), line5, 10);
-        itoa(5, testString5, 10); 
-        usbPutString("Light Sensor ");
-        usbPutString(testString5);
-        usbPutString(" : ");
-        usbPutString(line5);
-        usbPutString("\n\r");
-        
-        //LS6
-        itoa((maxValue[6]-minValue[6]), line6, 10);
-        itoa(6, testString6, 10); 
-        usbPutString("Light Sensor ");
-        usbPutString(testString6);
-        usbPutString(" : ");
-        usbPutString(line6);
-        usbPutString("\n\r");
+        printLightSensorValues()      
         
         int voltage = getBatteryVoltage();
+        itoa(voltage, entry, 10);
+        usbPutString("Battery Voltage: ");
+        usbPutString(entry);
+        usbPutString("\n\r");
+        
+        /*
         int completeStructure = handleRadioData();
         if (completeStructure == 1) {
             int8 strength = system_state.rssi;
@@ -217,10 +154,67 @@ int main()
             }
         }
     calculateDistanceTravelled();
+    */
     }
 }
 
 //* ========================================
+void printLightSensorValues() {
+    //LS1
+    itoa((maxValue[1]-minValue[1]), line1, 10);
+    itoa(1, testString1, 10); 
+    usbPutString("Light Sensor ");
+    usbPutString(testString1);
+    usbPutString(" : ");
+    usbPutString(line1);
+    usbPutString("\n\r");
+        
+    //LS2
+    itoa((maxValue[2]-minValue[2]), line2, 10);
+    itoa(2, testString2, 10); 
+    usbPutString("Light Sensor ");
+    usbPutString(testString2);
+    usbPutString(" : ");
+    usbPutString(line2);
+    usbPutString("\n\r");
+        
+    //LS3
+    itoa((maxValue[3]-minValue[3]), line3, 10);
+    itoa(3, testString3, 10); 
+    usbPutString("Light Sensor ");
+    usbPutString(testString3);
+    usbPutString(" : ");
+    usbPutString(line3);
+    usbPutString("\n\r");
+        
+    //LS4
+    itoa((maxValue[4]-minValue[4]), line4, 10);
+    itoa(4, testString4, 10); 
+    usbPutString("Light Sensor ");
+    usbPutString(testString4);
+    usbPutString(" : ");
+    usbPutString(line4);
+    usbPutString("\n\r");
+        
+    //LS5
+    itoa((maxValue[5]-minValue[5]), line5, 10);
+    itoa(5, testString5, 10); 
+    usbPutString("Light Sensor ");
+    usbPutString(testString5);
+    usbPutString(" : ");
+    usbPutString(line5);
+    usbPutString("\n\r");
+        
+    //LS6
+    itoa((maxValue[6]-minValue[6]), line6, 10);
+    itoa(6, testString6, 10); 
+    usbPutString("Light Sensor ");
+    usbPutString(testString6);
+    usbPutString(" : ");
+    usbPutString(line6);
+    usbPutString("\n\r");
+}
+
 void sensorIsUnderLine(int sensorNum) {
     ADC_StartConvert(); // start conversion
     int i = 0;
@@ -260,7 +254,7 @@ int getBatteryVoltage() {
                 break;
             }
         } 
-    int voltage = (ADCValue*8*1000)/4096;
+    int voltage = (ADCValue*8*1000)/4096;  
     return voltage;
 }
 //* ========================================
