@@ -60,6 +60,10 @@ int isUnderLine[] = {0,0,0,0,0,0,0};       //boolean value for determining wheth
 int motor1Speed = 20;
 int motor2Speed = 20*0.96; 
 
+//Flags for turns
+int turningLeft = 0;
+int turningRight = 0;
+
 
 void sensorIsUnderLine(int sensorNum);
 int getBatteryVoltage();
@@ -286,18 +290,102 @@ void handle_usb() {
     }    
 }
 
+//function to turn the robot to the left
+//change to reasonable turning speed for both motors***
+void turn_left(){
+        PWM_1_WriteCompare(255); //move motor1 backward
+        PWM_2_WriteCompare(0); //move motor2 forward  
+}
+
+//function to turn the robot to the right
+//change to reasonable turning speed for both motors***
+void turn_right(){
+        PWM_1_WriteCompare(0); //move motor1 forward
+        PWM_2_WriteCompare(255); //move motor2 backward 
+}
+
+//function to handle turns
+//for now, all the intersections will result in a left turn (unless its not posssible then it'll turn right)
+void handle_turns() {
+
+    //CASE 1
+    //not sure if this type of intersection exists in the map or not so it is commented out for now
+    /*if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 1) {
+        turningLeft = 1;
+        while (turningLeft) {
+            turn_left();
+            if (
+        }
+        //turn left
+    }*/
+    
+    //CASE 2
+    if (isUnderLine[1] == 0 && isUnderLine[2] == 0 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 1) {
+        turningLeft = 1;
+        while (turningLeft) {
+            turn_left();
+            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 1) {
+                turningLeft = 0;
+            }
+        }
+    }
+    //CASE 3
+    else if (isUnderLine[1] == 0 && isUnderLine[2] == 0 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 1) {
+        turningLeft = 1;
+        while (turningLeft) {
+            turn_left();
+            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 0) {
+                turningLeft = 0;
+            }
+        }
+    } 
+    //CASE 4
+    else if (isUnderLine[1] == 0 && isUnderLine[2] == 0 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 1) {
+        turningRight = 1;
+        while (turningRight) {
+            turn_right();
+            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 0) {
+                turningRight = 0;
+            }
+        }
+    }
+    //CASE 5
+    else if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 1) {
+        turningRight = 1;
+        while (turningRight) {
+               turn_right();
+            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 0) {
+                turningRight = 0;
+            }
+        }
+    } 
+    //CASE 6
+    else if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 1) {
+        turningLeft = 1;
+        while (turningLeft) {
+            turn_left();
+            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 0) {
+                turningLeft = 0;
+            }
+        }
+    }    
+}
+
 //function havent been added to main-while loop
-//checks the value in the light_sensore array and move th robot accordingly
+//checks the value in the light_sensor array and move th robot accordingly
 void check_array() {  
     //both sensors are on the line
-    if (isUnderLine[1] == 1 && isUnderLine[2] == 1) {
+    //CASE 7
+    if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 1) {
         //move forward as per usual
+        turningLeft = 0; //done turning (if it was turning previously) so unflag
         PWM_1_WriteCompare(motor1Speed);
         PWM_2_WriteCompare(motor2Speed);
     }
     //sensor 1 is on the line 
     //sensor 2 off the line
-    else if (isUnderLine[1] == 1 && isUnderLine[2] == 0) {
+    //CASE 10
+    else if (isUnderLine[1] == 1 && isUnderLine[2] == 0 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 0) {
         //decrease motor1 speed
         //increase motor2 speed
         motor1Speed = motor1Speed + 1;
@@ -307,7 +395,8 @@ void check_array() {
     }
     //sensor 1 off the line
     //sensor 2 on the line
-    else if (isUnderLine[1] == 0 && isUnderLine[2] == 1) {
+    //CASE 9
+    else if (isUnderLine[1] == 0 && isUnderLine[2] == 1 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 0) {
         //increase motor1 speed
         //decrease motor2 speed
         motor1Speed = motor1Speed - 1;
@@ -315,11 +404,16 @@ void check_array() {
         PWM_1_WriteCompare(motor1Speed);
         PWM_2_WriteCompare(motor2Speed);
     }
-    //both sensors off the line
-    else if (isUnderLine[1] == 0 && isUnderLine[2] == 0) {
+    //both front sensors off the line
+    //CASE 8
+    else if (isUnderLine[1] == 0 && isUnderLine[2] == 0 && isUnderLine[4] == 1 && isUnderLine[6] == 1) {
         //stop both motors
         PWM_1_WriteCompare(127);
         PWM_2_WriteCompare(127);        
+    }
+    else {
+        //sensors are not aligned for straight line algorithm
+        handle_turns();
     }
 }
 
