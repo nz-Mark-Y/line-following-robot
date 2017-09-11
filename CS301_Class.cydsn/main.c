@@ -41,6 +41,7 @@
 char rf_string[RXSTRINGSIZE];
 char rf_string_complete[RXSTRINGSIZE];
 char displaystring[BUF_SIZE] = "UART Lab Exercise 4\n";
+char testString[BUF_SIZE];
 char line[BUF_SIZE], entry[BUF_SIZE], test[BUF_SIZE];
 uint8 usbBuffer[BUF_SIZE];
 
@@ -110,19 +111,24 @@ int main()
     
     while(1) {
         //Update each sensor values of maxValue, ADCValue and isUnderLine
-        for(int m = 1; m < 7; m++){
+        int m;
+        for (m = 1; m < 7; m++){
             sensorIsUnderLine(m);
         }
         
         //Print each sensor values of maxValues
-        for(int m = 1; m < 7; m++){
+        for(m = 1; m < 7; m++){
             if (usbOutput == 1) {
                 itoa(maxValue[m], line, 10);
+                itoa(m, testString, 10); 
+                usbPutString("Light Sensor ");
+                usbPutString(testString);
+                usbPutString(" : ");
                 usbPutString(line);
                 usbPutString("\n");
             }
-        
         }
+        
         int voltage = getBatteryVoltage();
         int completeStructure = handleRadioData();
         if (completeStructure == 1) {
@@ -182,7 +188,6 @@ void sensorIsUnderLine(int sensorNum) {
         LED_Write(0);   
         isUnderLine[sensorNum] = 0;     //Not under the line
     }
-    
     return;
 }
 //* ========================================
