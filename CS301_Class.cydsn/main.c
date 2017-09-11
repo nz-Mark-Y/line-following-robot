@@ -115,7 +115,7 @@ int main() {
         for (m = 1; m < 7; m++){
             sensorIsUnderLine(m);
         }
-        printLightSensorValues()      
+        printLightSensorValues();      
         
         int voltage = getBatteryVoltage();
         itoa(voltage, entry, 10);
@@ -161,7 +161,7 @@ int main() {
 //* ========================================
 void printLightSensorValues() {
     //LS1
-    itoa((maxValue[1]-minValue[1]), line1, 10);
+    itoa(((maxValue[1]-minValue[1])/5), line1, 10);
     itoa(1, testString1, 10); 
     usbPutString("Light Sensor ");
     usbPutString(testString1);
