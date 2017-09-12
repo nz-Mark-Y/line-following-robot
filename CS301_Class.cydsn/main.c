@@ -21,65 +21,58 @@
 #include <ADC_SAR.h>
 #include <CONTROL.h>
 
-#define TOGGLE_LED LED_Write(~LED_Read())
 #define RXSTRINGSIZE 255
-
-#define FALSE 0
-#define TRUE 1
-
 #define BUF_SIZE 64 // USBUART fixed buffer size
-
-#define CHAR_NULL '0'
-#define CHAR_BACKSP 0x08
-#define CHAR_DEL 0x7F
-#define CHAR_ENTER 0x0D
-#define LOW_DIGIT '0'
-#define HIGH_DIGIT '9'
 
 #define SOP 0xaa
 //* ========================================
 char rf_string[RXSTRINGSIZE];
-char rf_string_complete[RXSTRINGSIZE];
-char displaystring[BUF_SIZE] = "UART Lab Exercise 4\n";
-char testString[BUF_SIZE], testString1[BUF_SIZE], testString2[BUF_SIZE], testString3[BUF_SIZE], testString4[BUF_SIZE], testString5[BUF_SIZE], testString6[BUF_SIZE];
-char line[BUF_SIZE], entry[BUF_SIZE], test[BUF_SIZE], line1[BUF_SIZE], line2[BUF_SIZE],  line3[BUF_SIZE],  line4[BUF_SIZE],  line5[BUF_SIZE],  line6[BUF_SIZE];
-uint8 usbBuffer[BUF_SIZE];
-
+char line[BUF_SIZE], battery_voltage_string[BUF_SIZE], test[BUF_SIZE], entry[BUF_SIZE], motor_line_1[BUF_SIZE], motor_line_2[BUF_SIZE];
+uint8 usb_buffer[BUF_SIZE];
+//* ========================================
+int mode = 0;
 int count = 0;
-int startCount = 0;
-int usbOutput = 1;
-
-int motor1Distance = 0; //global variables that keep track of distance travelled by robot's two wheels
-int motor2Distance = 0; //distances are in millimetres
-
+int start_count = 0;
+int usb_output = 1;
+//* ========================================
+int motor_1_distance = 0; //global variables that keep track of distance travelled by robot's two wheels
+int motor_2_distance = 0; //distances are in millimetres
+//* ========================================
 //Arrays for light sensors, index value 0 is not used (makes it easier to link index number to sensor number)
-int maxValue[] = {0,0,0,0,0,0,0};             //max value sensed by each light sensor (ignore index value 0)
-int minValue[] = {0,0,0,0,0,0,0};             //min value sensed by each light sensor (ignore index value 0)
-int ADCValue[] = {0,0,0,0,0,0,0};             //current ADC value from each light sensor (ignore index value 0)
-int isUnderLine[] = {0,0,0,0,0,0,0};       //boolean value for determining whether or not a light sensor is under the line or not (ignore index value 0)
-
+int max_value[] = {0,0,0,0,0,0,0};             //max value sensed by each light sensor (ignore index value 0)
+int min_value[] = {0,0,0,0,0,0,0};             //min value sensed by each light sensor (ignore index value 0)
+int ADC_value[] = {0,0,0,0,0,0,0};             //current ADC value from each light sensor (ignore index value 0)
+int is_under_line[] = {0,0,0,0,0,0,0};       //boolean value for determining whether or not a light sensor is under the line or not (ignore index value 0)
+//* ========================================
 //Initialising motor speed values
-int motor1Speed = 20;
-int motor2Speed = 20*0.96; 
-
+int motor_1_default_speed = 80;
+int motor_2_default_speed = 80;
+int motor_1_speed = 80;
+int motor_2_speed = 80;
+//* ========================================
 //Flags for turns
-int turningLeft = 0;
-int turningRight = 0;
-
-void printLightSensorValues();
-void sensorIsUnderLine(int sensorNum);
-int getBatteryVoltage();
-int handleRadioData();
-void usbPutString(char *s);
-void usbPutChar(char c);
-void handle_rx_binary();
-void handle_rx_ascii();
+int turning_left = 0;
+int turning_right = 0;
+//* ========================================
+void print_light_sensor_values();
+void sensor_is_under_line(int sensorNum);
+int get_battery_voltage();
+int handle_radio_data();
+void usb_put_string(char *s);
+void usb_put_char(char c);
 void handle_usb();
-void calculateDistanceTravelled();
+void turn_left();
+void turn_right();
+void go_straight();
+void handle_turns();
+void curves_mode();
+void turns_mode();
+void calculate_distance_travelled();
+void check_mode();
 //* ========================================
 #include "defines.h"
 #include "vars.h"
-
+//* ========================================
 int main() {
 // --------------------------------    
 // ----- INITIALIZATIONS ----------
@@ -89,43 +82,50 @@ int main() {
     USBUART_Start(0,USBUART_5V_OPERATION);  
     RF_BT_SELECT_Write(0);
     
-// ------MOTOR SETUP --------------       
+// ------MOTOR SETUP --------------     
+    CONTROL_Write(0b00000011); // disable motor    
+    CyDelay(2000);
     
     CONTROL_Write(0b00000000); // enable motor
     Clock_PWM_Start(); // Start clock for PWM
     PWM_1_Start();
     PWM_2_Start();
-    PWM_1_WriteCompare(motor1Speed);
-    PWM_2_WriteCompare(motor2Speed);
-    
-    //CONTROL_Write(0b00000011); // disable motor
-    
+    PWM_1_WriteCompare(motor_1_speed);
+    PWM_2_WriteCompare(motor_2_speed);
+
 // ------ADC SETUP ----------------      
     ADC_Start();
+    QuadDec_M1_Start();
+    QuadDec_M2_Start();
     
 // ------UART_RF Setup------------- 
     USBUART_Start(0,USBUART_5V_OPERATION);
     UART_Start();
     isrRF_RX_Start();
-    usbPutString(displaystring);   
     
     while(1) {
-        //Update each sensor values of maxValue, ADCValue and isUnderLine
+        //Update each sensor values of max_value, ADC_value and is_under_line
         int m;
         for (m = 1; m < 7; m++){
-            sensorIsUnderLine(m);
+            sensor_is_under_line(m);
         }
-        printLightSensorValues();      
         
-        int voltage = getBatteryVoltage();
-        itoa(voltage, entry, 10);
-        usbPutString("Battery Voltage: ");
-        usbPutString(entry);
-        usbPutString("\n\r");
+        check_mode();
         
+        if (mode == 0) {
+            curves_mode();
+        } else if (mode == 1) {
+            turns_mode();   
+        }   
         /*
-        int completeStructure = handleRadioData();
-        if (completeStructure == 1) {
+        int voltage = get_battery_voltage();
+        itoa(voltage, battery_voltage_string, 10);
+        usb_put_string("Battery Voltage: ");
+        usb_put_string(battery_voltage_string);
+        usb_put_string("\n\r");
+    
+        int complete_structure = handle_radio_data();
+        if (complete_structure == 1) {
             int8 strength = system_state.rssi;
             int16 xpos = system_state.robot_xpos;
             int16 ypos = system_state.robot_ypos;
@@ -133,132 +133,167 @@ int main() {
                 
             if (orient > 0) {                   
                 itoa(strength, line, 10);
-                usbPutString("RSSI: ");
-                usbPutString(line);
-                usbPutString("\n\r");
+                usb_put_string("RSSI: ");
+                usb_put_string(line);
+                usb_put_string("\n\r");
                 
                 itoa(xpos, line, 10);
-                usbPutString("XPOS: ");
-                usbPutString(line);
-                usbPutString("\n\r");
+                usb_put_string("XPOS: ");
+                usb_put_string(line);
+                usb_put_string("\n\r");
                 
                 itoa(ypos, line, 10);
-                usbPutString("YPOS: ");
-                usbPutString(line);
-                usbPutString("\n\r");
+                usb_put_string("YPOS: ");
+                usb_put_string(line);
+                usb_put_string("\n\r");
                 
                 itoa(orient, test, 10);
-                usbPutString("Orientation: ");
-                usbPutString(test);
-                usbPutString("\n\r");
+                usb_put_string("Orientation: ");
+                usb_put_string(test);
+                usb_put_string("\n\r");
             }
         }
-    calculateDistanceTravelled();
+    
     */
+    calculate_distance_travelled();
     }
 }
 
 //* ========================================
-void printLightSensorValues() {
+void print_light_sensor_values() {
+    // prints out light sensor values 
+    
+    char sensor_string_1[BUF_SIZE], sensor_string_2[BUF_SIZE], sensor_string_3[BUF_SIZE], sensor_string_4[BUF_SIZE], sensor_string_5[BUF_SIZE], sensor_string_6[BUF_SIZE];
+    char line1[BUF_SIZE], line2[BUF_SIZE],  line3[BUF_SIZE],  line4[BUF_SIZE],  line5[BUF_SIZE],  line6[BUF_SIZE];
+    
     //LS1
-    itoa(((maxValue[1]-minValue[1])/5), line1, 10);
-    itoa(1, testString1, 10); 
-    usbPutString("Light Sensor ");
-    usbPutString(testString1);
-    usbPutString(" : ");
-    usbPutString(line1);
-    usbPutString("\n\r");
+    itoa((max_value[1]-min_value[1]), line1, 10);
+    itoa(1, sensor_string_1, 10); 
+    usb_put_string("Light Sensor ");
+    usb_put_string(sensor_string_1);
+    usb_put_string(" : ");
+    usb_put_string(line1);
+    if(is_under_line[1]){
+        usb_put_string(" , is under the line.");
+    }
+    usb_put_string("\n\r");
         
     //LS2
-    itoa((maxValue[2]-minValue[2]), line2, 10);
-    itoa(2, testString2, 10); 
-    usbPutString("Light Sensor ");
-    usbPutString(testString2);
-    usbPutString(" : ");
-    usbPutString(line2);
-    usbPutString("\n\r");
+    itoa((max_value[2]-min_value[2]), line2, 10);
+    itoa(2, sensor_string_2, 10); 
+    usb_put_string("Light Sensor ");
+    usb_put_string(sensor_string_2);
+    usb_put_string(" : ");
+    usb_put_string(line2);
+    if(is_under_line[2]){
+        usb_put_string(" , is under the line.");
+    }
+    usb_put_string("\n\r");
         
     //LS3
-    itoa((maxValue[3]-minValue[3]), line3, 10);
-    itoa(3, testString3, 10); 
-    usbPutString("Light Sensor ");
-    usbPutString(testString3);
-    usbPutString(" : ");
-    usbPutString(line3);
-    usbPutString("\n\r");
+    itoa((max_value[3]-min_value[3]), line3, 10);
+    itoa(3, sensor_string_3, 10); 
+    usb_put_string("Light Sensor ");
+    usb_put_string(sensor_string_3);
+    usb_put_string(" : ");
+    usb_put_string(line3);
+    if(is_under_line[3]){
+        usb_put_string(" , is under the line.");
+    }
+    usb_put_string("\n\r");
         
     //LS4
-    itoa((maxValue[4]-minValue[4]), line4, 10);
-    itoa(4, testString4, 10); 
-    usbPutString("Light Sensor ");
-    usbPutString(testString4);
-    usbPutString(" : ");
-    usbPutString(line4);
-    usbPutString("\n\r");
+    itoa((max_value[4]-min_value[4]), line4, 10);
+    itoa(4, sensor_string_4, 10); 
+    usb_put_string("Light Sensor ");
+    usb_put_string(sensor_string_4);
+    usb_put_string(" : ");
+    usb_put_string(line4);
+    if(is_under_line[4]){
+        usb_put_string(" , is under the line.");
+    }
+    usb_put_string("\n\r");
         
     //LS5
-    itoa((maxValue[5]-minValue[5]), line5, 10);
-    itoa(5, testString5, 10); 
-    usbPutString("Light Sensor ");
-    usbPutString(testString5);
-    usbPutString(" : ");
-    usbPutString(line5);
-    usbPutString("\n\r");
+    itoa((max_value[5]-min_value[5]), line5, 10);
+    itoa(5, sensor_string_5, 10); 
+    usb_put_string("Light Sensor ");
+    usb_put_string(sensor_string_5);
+    usb_put_string(" : ");
+    usb_put_string(line5);
+    if(is_under_line[5]){
+        usb_put_string(" , is under the line.");
+    }
+    usb_put_string("\n\r");
         
     //LS6
-    itoa((maxValue[6]-minValue[6]), line6, 10);
-    itoa(6, testString6, 10); 
-    usbPutString("Light Sensor ");
-    usbPutString(testString6);
-    usbPutString(" : ");
-    usbPutString(line6);
-    usbPutString("\n\r");
+    itoa((max_value[6]-min_value[6]), line6, 10);
+    itoa(6, sensor_string_6, 10); 
+    usb_put_string("Light Sensor ");
+    usb_put_string(sensor_string_6);
+    usb_put_string(" : ");
+    usb_put_string(line6);
+    if(is_under_line[6]){
+        usb_put_string(" , is under the line.");
+    }
+    usb_put_string("\n\r");
 }
-
-void sensorIsUnderLine(int sensorNum) {
+//* ========================================
+void sensor_is_under_line(int sensorNum) {
+    // checks if a light sensor is under a line
+    
     ADC_StartConvert(); // start conversion
     int i = 0;
-    ADCValue[sensorNum] = 0;
-    maxValue[sensorNum] = 0;
-    minValue[sensorNum] = 4096;
+    ADC_value[sensorNum] = 0;
+    max_value[sensorNum] = 0;
+    min_value[sensorNum] = 4096;
     for(i=0;i < 70;i++){ // 70 data points, to cover one period of the waveform            
         while(1) {
             if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) { // when conversion completes
-                ADCValue[sensorNum] = ADC_GetResult16(sensorNum); // get result from channel
-                if (ADCValue[sensorNum] > maxValue[sensorNum]){ // take max over that period
-                    maxValue[sensorNum] = ADCValue[sensorNum];
-                } else if(ADCValue[sensorNum] < minValue[sensorNum]){
-                    minValue[sensorNum] = ADCValue[sensorNum];  // take min over that period
+                ADC_value[sensorNum] = ADC_GetResult16(sensorNum); // get result from channel
+                if (ADC_value[sensorNum] > max_value[sensorNum]){ // take max over that period
+                    max_value[sensorNum] = ADC_value[sensorNum];
+                } else if(ADC_value[sensorNum] < min_value[sensorNum]){
+                    min_value[sensorNum] = ADC_value[sensorNum];  // take min over that period
                 }
                 break;
             }
         }               
     }
   
-    if (maxValue[sensorNum] < 2400){
+    if(sensorNum == 1) {
+        max_value[1] = ((max_value[1] - 1638) * 1.6667);
+        min_value[1] = (min_value[1] - 1638) * 1.6667;      
+    }
+    
+    if ((max_value[sensorNum]-min_value[sensorNum]) < 180){
         LED_Write(1);
-        isUnderLine[sensorNum] = 1;     //Under the line
+        is_under_line[sensorNum] = 1;     //Under the line
     } else {
         LED_Write(0);   
-        isUnderLine[sensorNum] = 0;     //Not under the line
+        is_under_line[sensorNum] = 0;     //Not under the line
     }
     return;
 }
 //* ========================================
-int getBatteryVoltage() {
-   ADC_StartConvert();
-        int ADCValue = 0;
+int get_battery_voltage() {
+    // gets the battery voltage
+    
+    ADC_StartConvert();
+        int ADC_value = 0;
         while (1) {
             if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) {
-                ADCValue = ADC_GetResult16(4u);
+                ADC_value = ADC_GetResult16(0);
                 break;
             }
         } 
-    int voltage = (ADCValue*10*1000)/4096;  
+    int voltage = (ADC_value*8*1000)/4096;  
     return voltage;
 }
 //* ========================================
-int handleRadioData() {
+int handle_radio_data() {
+    // handles received radio data, in binary
+    
     int rxReceived = 0;
     if (flag_rx == 1) {
         char data;           
@@ -271,10 +306,10 @@ int handleRadioData() {
         
         data = UART_GetChar();
         if (data == SOP) {
-            startCount++;
-            if (startCount == 2) {
+            start_count++;
+            if (start_count == 2) {
                 count = -1;
-                startCount = 0;
+                start_count = 0;
             }                  
         } 
         if (count >= 0) {
@@ -286,10 +321,9 @@ int handleRadioData() {
     return rxReceived;
 }
 //* ========================================
-void usbPutString(char *s) {
-// !! Assumes that *s is a string with allocated space >=64 chars     
-//  Since USB implementation retricts data packets to 64 chars, this function truncates the
-//  length to 62 char (63rd char is a '!')
+void usb_put_string(char *s) {
+    //  assumes that *s is a string with allocated space >=64 chars     
+    //  since USB implementation retricts data packets to 64 chars, this function truncates the length to 62 char (63rd char is a '!')  
 
 #ifdef USE_USB     
     while (USBUART_CDCIsReady() == 0);
@@ -299,7 +333,7 @@ void usbPutString(char *s) {
 #endif
 }
 //* ========================================
-void usbPutChar(char c) {
+void usb_put_char(char c) {
 #ifdef USE_USB     
     while (USBUART_CDCIsReady() == 0);
     USBUART_PutChar(c);
@@ -348,152 +382,153 @@ void handle_usb() {
         }
     }    
 }
-
-//function to turn the robot to the left
-//change to reasonable turning speed for both motors***
+//* ========================================
 void turn_left(){
-        PWM_1_WriteCompare(255); //move motor1 backward
-        PWM_2_WriteCompare(0); //move motor2 forward  
-}
-
-//function to turn the robot to the right
-//change to reasonable turning speed for both motors***
-void turn_right(){
-        PWM_1_WriteCompare(0); //move motor1 forward
-        PWM_2_WriteCompare(255); //move motor2 backward 
-}
-
-//function to handle turns
-//for now, all the intersections will result in a left turn (unless its not posssible then it'll turn right)
-void handle_turns() {
-
-    //CASE 1
-    //not sure if this type of intersection exists in the map or not so it is commented out for now
-    /*if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 1) {
-        turningLeft = 1;
-        while (turningLeft) {
-            turn_left();
-            if (
-        }
-        //turn left
-    }*/
+    // function to turn the robot to the left
+    // change to reasonable turning speed for both motors
     
-    //CASE 2
-    if (isUnderLine[1] == 0 && isUnderLine[2] == 0 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 1) {
-        turningLeft = 1;
-        while (turningLeft) {
-            turn_left();
-            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 1) {
-                turningLeft = 0;
-            }
+    PWM_1_WriteCompare(180); //move motor1 backward
+    PWM_2_WriteCompare(65); //move motor2 forward  
+}
+//* ========================================
+void turn_right() {
+    // function to turn the robot to the right
+    // change to reasonable turning speed for both motors
+    
+    PWM_1_WriteCompare(65); //move motor1 forward
+    PWM_2_WriteCompare(180); //move motor2 backward 
+}
+//* ========================================
+void go_straight() {
+    // function to make the robot go straight
+    // change to default speed for both motors
+    
+    motor_1_speed = motor_1_default_speed;
+    motor_2_speed = motor_2_default_speed;
+    PWM_1_WriteCompare(motor_1_speed);
+    PWM_2_WriteCompare(motor_2_speed);
+}
+//* ========================================
+void turns_mode() { 
+    // function to handle turns mode
+    
+    if (turning_left == 1) {
+        if (is_under_line[1] == 1 && is_under_line[2] == 1 && is_under_line[3] == 1 && is_under_line[4] == 1) {
+            turning_left = 0;
+            go_straight();
+        } else {
+            turn_left(); 
         }
     }
-    //CASE 3
-    else if (isUnderLine[1] == 0 && isUnderLine[2] == 0 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 1) {
-        turningLeft = 1;
-        while (turningLeft) {
-            turn_left();
-            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 0) {
-                turningLeft = 0;
-            }
+    
+    if (turning_right == 1) {
+        if (is_under_line[1] == 1 && is_under_line[2] == 1 && is_under_line[3] == 1 && is_under_line[4] == 1) {
+            turning_right = 0;
+            go_straight();
+        } else {   
+            turn_right();
         }
+    }
+
+    // keep robot on straight line
+    if (is_under_line[1] == 1 && is_under_line[2] == 1) {
+        turning_left = 0;
+        turning_right = 0;
+        go_straight();
+    }
+    else if (is_under_line[1] == 1 && is_under_line[2] == 0) {
+        motor_1_speed = 105;
+        motor_2_speed = 75;       
+        PWM_1_WriteCompare(motor_1_speed);
+        PWM_2_WriteCompare(motor_2_speed);
+    }
+    else if (is_under_line[1] == 0 && is_under_line[2] == 1) {
+        motor_1_speed = 75;
+        motor_2_speed = 105;
+        PWM_1_WriteCompare(motor_1_speed);
+        PWM_2_WriteCompare(motor_2_speed);
+    }
+    
+    // handle 90 degree turns
+    //CASE 3
+    else if (is_under_line[1] == 0 && is_under_line[2] == 0 && is_under_line[3] == 1 && is_under_line[4] == 1 && is_under_line[5] == 0 && is_under_line[6] == 1) {
+        turning_left = 1;    
     } 
     //CASE 4
-    else if (isUnderLine[1] == 0 && isUnderLine[2] == 0 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 1) {
-        turningRight = 1;
-        while (turningRight) {
-            turn_right();
-            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 0) {
-                turningRight = 0;
-            }
-        }
+    else if (is_under_line[1] == 0 && is_under_line[2] == 0 && is_under_line[3] == 0 && is_under_line[4] == 1 && is_under_line[5] == 1 && is_under_line[6] == 1) {
+        turning_right = 1;
     }
-    //CASE 5
-    else if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 1) {
-        turningRight = 1;
-        while (turningRight) {
-               turn_right();
-            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 0) {
-                turningRight = 0;
-            }
-        }
-    } 
-    //CASE 6
-    else if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 1) {
-        turningLeft = 1;
-        while (turningLeft) {
-            turn_left();
-            if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 1 && isUnderLine[4] == 1 && isUnderLine[5] == 1 && isUnderLine[6] == 0) {
-                turningLeft = 0;
-            }
-        }
-    }    
 }
-
-//function havent been added to main-while loop
-//checks the value in the light_sensor array and move th robot accordingly
-void check_array() {  
-    //both sensors are on the line
+//* ========================================
+void curves_mode() {  
+    // function to handle curves mode
+ 
     //CASE 7
-    if (isUnderLine[1] == 1 && isUnderLine[2] == 1 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 0 && isUnderLine[6] == 1) {
-        //move forward as per usual
-        turningLeft = 0; //done turning (if it was turning previously) so unflag
-        PWM_1_WriteCompare(motor1Speed);
-        PWM_2_WriteCompare(motor2Speed);
+    if (is_under_line[1] == 1 && is_under_line[2] == 1) { // both sensors are on the line
+        turning_left = 0;
+        turning_right = 0;
+        go_straight(); // move forward as per usual
     }
-    //sensor 1 is on the line 
-    //sensor 2 off the line
     //CASE 10
-    else if (isUnderLine[1] == 1 && isUnderLine[2] == 0 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 0) {
-        //decrease motor1 speed
-        //increase motor2 speed
-        motor1Speed = motor1Speed + 1;
-        motor2Speed = motor2Speed - 1;        
-        PWM_1_WriteCompare(motor1Speed);
-        PWM_2_WriteCompare(motor2Speed);
+    else if (is_under_line[1] == 1 && is_under_line[2] == 0) { // sensor 1 is on the line, sensor 2 is off the line    
+        motor_1_speed = 105; // decrease motor1 speed
+        motor_2_speed = 75; // increase motor2 speed        
+        PWM_1_WriteCompare(motor_1_speed);
+        PWM_2_WriteCompare(motor_2_speed);
     }
-    //sensor 1 off the line
-    //sensor 2 on the line
     //CASE 9
-    else if (isUnderLine[1] == 0 && isUnderLine[2] == 1 && isUnderLine[3] == 0 && isUnderLine[4] == 1 && isUnderLine[5] == 0) {
-        //increase motor1 speed
-        //decrease motor2 speed
-        motor1Speed = motor1Speed - 1;
-        motor2Speed = motor2Speed + 1;  
-        PWM_1_WriteCompare(motor1Speed);
-        PWM_2_WriteCompare(motor2Speed);
+    else if (is_under_line[1] == 0 && is_under_line[2] == 1) { // sensor 1 is off the line, sensor 2 is on the line
+        motor_1_speed = 75; // increase motor1 speed
+        motor_2_speed = 105; // decrease motor2 speed
+        PWM_1_WriteCompare(motor_1_speed);
+        PWM_2_WriteCompare(motor_2_speed);
     }
-    //both front sensors off the line
     //CASE 8
-    else if (isUnderLine[1] == 0 && isUnderLine[2] == 0 && isUnderLine[4] == 1 && isUnderLine[6] == 1) {
-        //stop both motors
-        PWM_1_WriteCompare(127);
-        PWM_2_WriteCompare(127);        
-    }
-    else {
-        //sensors are not aligned for straight line algorithm
-        handle_turns();
+    else if (is_under_line[1] == 0 && is_under_line[2] == 0) { // both front sensors off the line
+        motor_1_speed = 170; // slow reverse
+        motor_2_speed = 170; // slow reverse
+        PWM_1_WriteCompare(motor_1_speed);
+        PWM_2_WriteCompare(motor_2_speed);
     }
 }
-
-//uses quadrature reading to determine the distance travelled by robot's two wheels
-void calculateDistanceTravelled(){
+//* ========================================
+void calculate_distance_travelled(){
+    // uses quadrature reading to determine the distance travelled by robot's two wheels
     
     //append distance value to global distance variable
-    motor1Distance = motor1Distance + (QuadDec_M1_GetCounter()*0.8887);//*202.6327/4/3/19
-    motor2Distance = motor2Distance + (QuadDec_M2_GetCounter()*0.8887);
+    //motor_1_distance = motor_1_distance + (QuadDec_M1_GetCounter()*0.8887);//*202.6327/4/3/19
+    //motor_2_distance = motor_2_distance + (QuadDec_M2_GetCounter()*0.8887);
     
-    QuadDec_M1_SetCounter(0);//reset counter after reading from it
-    QuadDec_M2_SetCounter(0);
+    motor_1_distance = QuadDec_M1_GetCounter();//*202.6327/4/3/19
+    motor_2_distance = QuadDec_M2_GetCounter();
     
-    itoa(motor1Distance, line, 10);
-    usbPutString("motor1Distance: ");
-    usbPutString(line);
-    usbPutString("\n\r");
-    
-    itoa(motor2Distance, line, 10);
-    usbPutString("motor2Distance: ");
-    usbPutString(line);
-    usbPutString("\n\r");
+    //QuadDec_M1_SetCounter(0);//reset counter after reading from it
+    //QuadDec_M2_SetCounter(0);
+    if (usb_output == 1) {
+        itoa(motor_1_distance, motor_line_1, 10);
+        usb_put_string("motor_1_distance: ");
+        usb_put_string(motor_line_1);
+        usb_put_string("\n\r");
+        
+        itoa(motor_2_distance, motor_line_2, 10);
+        usb_put_string("motor_2_distance: ");
+        usb_put_string(motor_line_2);
+        usb_put_string("\n\r"); 
+    }
 }    
+//* ========================================
+void check_mode() {
+    // checks mode switches to determine mode
+    
+    if ((mode_switch0_Read() == 0) && (mode_switch1_Read() == 0)) {
+        mode = 0;
+    } else if ((mode_switch0_Read() == 0) && (mode_switch1_Read() == 1)) {
+        mode = 1;
+    } else if ((mode_switch0_Read() == 1) && (mode_switch1_Read() == 0)) {
+        mode = 2;
+    } else if ((mode_switch0_Read() == 1) && (mode_switch1_Read() == 1)) {
+        mode = 3;
+    }
+}
+//* ========================================
 /* [] END OF FILE */
