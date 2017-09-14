@@ -110,7 +110,11 @@ int main() {
     USBUART_Start(0,USBUART_5V_OPERATION);
     UART_Start();
     isrRF_RX_Start();
-  
+    
+    if (mode_switch0_Read() == 1) {
+        usb_output = 1;
+    }
+    
     while(1) { 
         set_speeds();
         
@@ -557,15 +561,13 @@ void calculate_distance_travelled(){
 }
 
 void travel_straight() {
-    
     PWM_1_WriteCompare(50);
     PWM_2_WriteCompare(45);
-    int distance_to_travel = 1200; //get distance
+    int distance_to_travel = 1200; // get distance
     int average_distance = (motor_1_distance + motor_2_distance) / 2;
     
-    if ((distance_to_travel-20) <= average_distance) {
-        //stop
-        PWM_1_WriteCompare(127);
+    if ((distance_to_travel - 20) <= average_distance) {
+        PWM_1_WriteCompare(127); // stop
         PWM_2_WriteCompare(127);  
         usb_output = 0;
     }
