@@ -284,10 +284,8 @@ void sensor_is_under_line(int sensorNum) {
     }
     
     if ((max_value[sensorNum]-min_value[sensorNum]) < 180){
-        LED_Write(1);
         is_under_line[sensorNum] = 1;     //Under the line
-    } else {
-        LED_Write(0);   
+    } else { 
         is_under_line[sensorNum] = 0;     //Not under the line
     }
     return;
