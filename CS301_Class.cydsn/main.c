@@ -17,6 +17,7 @@
 #include <project.h>
 #include <ADC_SAR.h>
 #include <CONTROL.h>
+#include <math.h>
 #include "defines.h"
 #include "vars.h"
 //* ========================================
@@ -57,6 +58,9 @@ int turning_right = 0;
 int is_reverse = 0;
 int is_turning_left = 0;
 int is_turning_right = 0;
+int has_turned = 0;
+
+int timer_initial = 0;
 //* ========================================
 // function definitions
 void print_light_sensor_values();
@@ -73,12 +77,14 @@ void handle_turns();
 void curves_mode();
 void turns_mode();
 void calculate_distance_travelled();
+void travel_straight();
 void set_speeds();
 void check_mode();
 //* ========================================
 int main() {
 // ----- INITIALIZATIONS ----------
     CYGlobalIntEnable;
+    Timer_TS_Start();
 
 // ------USB SETUP ----------------    
     USBUART_Start(0,USBUART_5V_OPERATION);  
@@ -113,25 +119,24 @@ int main() {
         for (m = 1; m < 7; m++){
             sensor_is_under_line(m);
         }
-        
+
         check_mode();
-        turns_mode();
         /*
         if(flag_rx == 1) {
             usb_put_char(UART_GetChar());
         }
         */
-        /*
+
         if (mode == 0) {
             curves_mode(); 
         } else if (mode == 1) {
             turns_mode();   
         } else if (mode == 2) {
-            continue;
+            travel_straight();
         } else if (mode == 3) {
             continue;
         }
-        */
+        
         /*
         int complete_structure = handle_radio_data();     
         if (complete_structure == 1) {
@@ -296,10 +301,6 @@ int get_battery_voltage() {
             }
         } 
     int voltage = (ADC_value*8*1000)/4096;  
-    itoa(ADC_value, line, 10);
-    usb_put_string("voltage: ");
-    usb_put_string(line);
-    usb_put_string("\n\r"); 
     return voltage;
 }
 //* ========================================
@@ -400,16 +401,16 @@ void handle_usb() {
 void turn_left(){
     // function to turn the robot to the left
     // change to reasonable turning speed for both motors
-    PWM_1_WriteCompare(motor_1_default_speed + back_turn_speed); // move motor1 backward
-    PWM_2_WriteCompare(motor_2_default_speed - forward_turn_speed); // move motor2 forward  
+    PWM_1_WriteCompare(127 + back_turn_speed); // move motor1 backward
+    PWM_2_WriteCompare(127 - forward_turn_speed); // move motor2 forward  
 }
 //* ========================================
 void turn_right() {
     // function to turn the robot to the right
     // change to reasonable turning speed for both motors
 
-    PWM_1_WriteCompare(motor_1_default_speed - forward_turn_speed); // move motor1 forward
-    PWM_2_WriteCompare(motor_2_default_speed + back_turn_speed); // move motor2 backward 
+    PWM_1_WriteCompare(127 - forward_turn_speed); // move motor1 forward
+    PWM_2_WriteCompare(127 + back_turn_speed + 5); // move motor2 backward 
 }
 //* ========================================
 void go_straight() {
@@ -423,9 +424,16 @@ void go_straight() {
 //* ========================================
 void turns_mode() { 
     // function to handle turns mode
+    if (has_turned == 1) {
+        if ((Timer_TS_ReadCounter() > timer_initial + 2000) || ((Timer_TS_ReadCounter() < timer_initial) && (Timer_TS_ReadCounter() > 1500))) {
+            has_turned = 0;
+        }
+    }    
     
     if (turning_left == 1) {
         if (is_under_line[1] == 1 || is_under_line[2] == 1) {
+            has_turned = 1;
+            timer_initial = Timer_TS_ReadCounter();
             turning_left = 0;
             motor_1_speed = motor_1_default_speed;
             motor_2_speed = motor_2_default_speed + motor_correction_speed;
@@ -437,6 +445,8 @@ void turns_mode() {
     }
     else if (turning_right == 1) {
         if (is_under_line[1] == 1 || is_under_line[2] == 1) {
+            has_turned = 1;
+            timer_initial = Timer_TS_ReadCounter();
             turning_right = 0;
             motor_1_speed = motor_1_default_speed + motor_correction_speed;
             motor_2_speed = motor_2_default_speed;       
@@ -469,10 +479,22 @@ void turns_mode() {
     // handle 90 degree turns
     //CASE 3
     if (is_under_line[1] == 0 && is_under_line[2] == 0 && is_under_line[3] == 1) {
+        if (has_turned == 1) {
+            motor_1_speed = motor_backwards_speed; // slow reverse
+            motor_2_speed = motor_backwards_speed; // slow reverse
+            PWM_1_WriteCompare(motor_1_speed);
+            PWM_2_WriteCompare(motor_2_speed);       
+        }
         turning_left = 1;    
     } 
     //CASE 4
     else if (is_under_line[1] == 0 && is_under_line[2] == 0 && is_under_line[5] == 1) {
+        if (has_turned == 1) {
+            motor_1_speed = motor_backwards_speed; // slow reverse
+            motor_2_speed = motor_backwards_speed; // slow reverse
+            PWM_1_WriteCompare(motor_1_speed);
+            PWM_2_WriteCompare(motor_2_speed);       
+        }        
         turning_right = 1;
     }
 }
@@ -513,14 +535,14 @@ void calculate_distance_travelled(){
     // uses quadrature reading to determine the distance travelled by robot's two wheels
     
     //append distance value to global distance variable
-    //motor_1_distance = motor_1_distance + (QuadDec_M1_GetCounter()*0.8887);//*202.6327/4/3/19
-    //motor_2_distance = motor_2_distance + (QuadDec_M2_GetCounter()*0.8887);
+    motor_1_distance = motor_1_distance + fabs((float)(QuadDec_M1_GetCounter()*0.8887));//*202.6327/4/3/19
+    motor_2_distance = motor_2_distance + fabs((float)(QuadDec_M2_GetCounter()*0.8887));
     
-    motor_1_distance = QuadDec_M1_GetCounter();//*202.6327/4/3/19
-    motor_2_distance = QuadDec_M2_GetCounter();
+    //motor_1_distance = QuadDec_M1_GetCounter();//*202.6327/4/3/19
+    //motor_2_distance = QuadDec_M2_GetCounter();
     
-    //QuadDec_M1_SetCounter(0);//reset counter after reading from it
-    //QuadDec_M2_SetCounter(0);
+    QuadDec_M1_SetCounter(0);//reset counter after reading from it
+    QuadDec_M2_SetCounter(0);
     if (usb_output == 1) {
         itoa(motor_1_distance, motor_line_1, 10);
         usb_put_string("motor_1_distance: ");
@@ -532,7 +554,22 @@ void calculate_distance_travelled(){
         usb_put_string(motor_line_2);
         usb_put_string("\n\r"); 
     }
-}    
+}
+
+void travel_straight() {
+    
+    PWM_1_WriteCompare(50);
+    PWM_2_WriteCompare(45);
+    int distance_to_travel = 1200; //get distance
+    int average_distance = (motor_1_distance + motor_2_distance) / 2;
+    
+    if ((distance_to_travel-20) <= average_distance) {
+        //stop
+        PWM_1_WriteCompare(127);
+        PWM_2_WriteCompare(127);  
+        usb_output = 0;
+    }
+}
 void set_speeds() {
     voltage = get_battery_voltage();
 
@@ -571,7 +608,7 @@ void set_speeds() {
     }
     motor_1_default_speed = (int) initial_speed;
     motor_2_default_speed = (int) initial_speed; 
-    motor_backwards_speed = (initial_speed * 2) + 10;
+    motor_backwards_speed = (float)((float)((float)voltage / -150.0) + (float)(656.0 / 3.0));
 }
 
 //* ========================================

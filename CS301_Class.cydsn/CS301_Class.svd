@@ -19,7 +19,7 @@
         <register>
           <name>RX_UART_RX_ADDRESS1</name>
           <description>RX Address1 Register</description>
-          <addressOffset>0x4000642F</addressOffset>
+          <addressOffset>0x40006422</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -28,16 +28,7 @@
         <register>
           <name>RX_UART_RX_ADDRESS2</name>
           <description>RX Address2 Register</description>
-          <addressOffset>0x4000643F</addressOffset>
-          <size>8</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-        </register>
-        <register>
-          <name>TX_UART_TX_DATA</name>
-          <description>TX Data Register</description>
-          <addressOffset>0x40006449</addressOffset>
+          <addressOffset>0x40006432</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -46,6 +37,15 @@
         <register>
           <name>RX_UART_RX_DATA</name>
           <description>RX Data Register</description>
+          <addressOffset>0x40006442</addressOffset>
+          <size>8</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+        </register>
+        <register>
+          <name>TX_UART_TX_DATA</name>
+          <description>TX Data Register</description>
           <addressOffset>0x4000644F</addressOffset>
           <size>8</size>
           <access>read-write</access>
@@ -55,7 +55,7 @@
         <register>
           <name>RX_UART_RX_STATUS</name>
           <description>RX status register</description>
-          <addressOffset>0x4000646C</addressOffset>
+          <addressOffset>0x40006462</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -115,7 +115,7 @@
         <register>
           <name>TX_UART_TX_STATUS</name>
           <description>TX status register</description>
-          <addressOffset>0x40006569</addressOffset>
+          <addressOffset>0x40006568</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -156,7 +156,7 @@
     <peripheral>
       <name>CONTROL</name>
       <description>No description available</description>
-      <baseAddress>0x4000647D</baseAddress>
+      <baseAddress>0x40006479</baseAddress>
       <addressBlock>
         <offset>0</offset>
         <size>0x0</size>
@@ -761,7 +761,7 @@
     <peripheral>
       <name>RF_BT_SELECT</name>
       <description>No description available</description>
-      <baseAddress>0x4000647F</baseAddress>
+      <baseAddress>0x40006476</baseAddress>
       <addressBlock>
         <offset>0</offset>
         <size>0x0</size>
@@ -792,7 +792,7 @@
         <register>
           <name>QuadDec_M2_Cnt16_COUNTER</name>
           <description>Counter value</description>
-          <addressOffset>0x40006402</addressOffset>
+          <addressOffset>0x40006506</addressOffset>
           <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -801,7 +801,7 @@
         <register>
           <name>QuadDec_M2_STATUS_REG</name>
           <description>Quadrature Decoder Status Register</description>
-          <addressOffset>0x40006464</addressOffset>
+          <addressOffset>0x4000656B</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -852,7 +852,7 @@
         <register>
           <name>QuadDec_M2_Cnt16_COUNTER</name>
           <description>UDB.A0 - Current Counter Value</description>
-          <addressOffset>0x40006402</addressOffset>
+          <addressOffset>0x40006506</addressOffset>
           <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -861,7 +861,7 @@
         <register>
           <name>QuadDec_M2_Cnt16_PERIOD</name>
           <description>UDB.D0 - Assigned Period</description>
-          <addressOffset>0x40006422</addressOffset>
+          <addressOffset>0x40006526</addressOffset>
           <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -870,7 +870,7 @@
         <register>
           <name>QuadDec_M2_Cnt16_COMPARE</name>
           <description>UDB.D1 - Assigned Compare Value</description>
-          <addressOffset>0x40006432</addressOffset>
+          <addressOffset>0x40006536</addressOffset>
           <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -879,7 +879,7 @@
         <register>
           <name>QuadDec_M2_Cnt16_Control_Reg</name>
           <description>UDB Control Register - Assigned Control Register Value</description>
-          <addressOffset>0x40006475</addressOffset>
+          <addressOffset>0x40006574</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -911,7 +911,7 @@
         <register>
           <name>QuadDec_M2_Cnt16_STATUS_MASK</name>
           <description>UDB Status bits Interrupt Mask Enable Register</description>
-          <addressOffset>0x40006483</addressOffset>
+          <addressOffset>0x40006584</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -971,7 +971,7 @@
         <register>
           <name>QuadDec_M2_Cnt16_STATUS_AUX_CTRL</name>
           <description>UDB Auxilliary Control Register</description>
-          <addressOffset>0x40006493</addressOffset>
+          <addressOffset>0x40006594</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1106,9 +1106,18 @@
       </addressBlock>
       <registers>
         <register>
+          <name>QuadDec_M1_Cnt16_COUNTER</name>
+          <description>Counter value</description>
+          <addressOffset>0x40006405</addressOffset>
+          <size>16</size>
+          <access>read-write</access>
+          <resetValue>0</resetValue>
+          <resetMask>0</resetMask>
+        </register>
+        <register>
           <name>QuadDec_M1_STATUS_REG</name>
           <description>Quadrature Decoder Status Register</description>
-          <addressOffset>0x40006467</addressOffset>
+          <addressOffset>0x4000646B</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1144,15 +1153,6 @@
             </field>
           </fields>
         </register>
-        <register>
-          <name>QuadDec_M1_Cnt16_COUNTER</name>
-          <description>Counter value</description>
-          <addressOffset>0x40006506</addressOffset>
-          <size>16</size>
-          <access>read-write</access>
-          <resetValue>0</resetValue>
-          <resetMask>0</resetMask>
-        </register>
       </registers>
     </peripheral>
     <peripheral>
@@ -1168,7 +1168,7 @@
         <register>
           <name>QuadDec_M1_Cnt16_COUNTER</name>
           <description>UDB.A0 - Current Counter Value</description>
-          <addressOffset>0x40006506</addressOffset>
+          <addressOffset>0x40006405</addressOffset>
           <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1177,7 +1177,7 @@
         <register>
           <name>QuadDec_M1_Cnt16_PERIOD</name>
           <description>UDB.D0 - Assigned Period</description>
-          <addressOffset>0x40006526</addressOffset>
+          <addressOffset>0x40006425</addressOffset>
           <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1186,7 +1186,7 @@
         <register>
           <name>QuadDec_M1_Cnt16_COMPARE</name>
           <description>UDB.D1 - Assigned Compare Value</description>
-          <addressOffset>0x40006536</addressOffset>
+          <addressOffset>0x40006435</addressOffset>
           <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1195,7 +1195,7 @@
         <register>
           <name>QuadDec_M1_Cnt16_Control_Reg</name>
           <description>UDB Control Register - Assigned Control Register Value</description>
-          <addressOffset>0x40006577</addressOffset>
+          <addressOffset>0x40006471</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1227,7 +1227,7 @@
         <register>
           <name>QuadDec_M1_Cnt16_STATUS_MASK</name>
           <description>UDB Status bits Interrupt Mask Enable Register</description>
-          <addressOffset>0x40006584</addressOffset>
+          <addressOffset>0x40006481</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -1287,7 +1287,7 @@
         <register>
           <name>QuadDec_M1_Cnt16_STATUS_AUX_CTRL</name>
           <description>UDB Auxilliary Control Register</description>
-          <addressOffset>0x40006594</addressOffset>
+          <addressOffset>0x40006491</addressOffset>
           <size>8</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
@@ -3545,7 +3545,7 @@
           <name>Timer_TS_PERIOD</name>
           <description>TMRx.PER0 - Assigned Period</description>
           <addressOffset>0x40004F1C</addressOffset>
-          <size>8</size>
+          <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
           <resetMask>0</resetMask>
@@ -3554,7 +3554,7 @@
           <name>Timer_TS_COUNTER</name>
           <description>TMRx.CNT_CMP0 - Current Down Counter Value</description>
           <addressOffset>0x40004F1E</addressOffset>
-          <size>8</size>
+          <size>16</size>
           <access>read-write</access>
           <resetValue>0</resetValue>
           <resetMask>0</resetMask>
