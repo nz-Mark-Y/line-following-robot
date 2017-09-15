@@ -84,7 +84,10 @@ void check_mode();
 int main() {
 // ----- INITIALIZATIONS ----------
     CYGlobalIntEnable;
-    Timer_TS_Start();
+
+    isr_TS_Start();
+    isr_TS_Enable();    
+    Timer_TS_SetInterruptMode(3);
 
 // ------USB SETUP ----------------    
     USBUART_Start(0,USBUART_5V_OPERATION);  
@@ -119,7 +122,7 @@ int main() {
         set_speeds();
         
         // update each sensor values of max_value, ADC_value and is_under_line
-        int m;
+        int m;   
         for (m = 1; m < 7; m++){
             sensor_is_under_line(m);
         }
@@ -172,6 +175,7 @@ int main() {
             
         }
         */
+        
         calculate_distance_travelled();
     }
 }
@@ -428,16 +432,11 @@ void go_straight() {
 void turns_mode() { 
     // function to handle turns mode
     
-    if (has_turned == 1) {
-        if ((Timer_TS_ReadCounter() > timer_initial + 2000) || ((Timer_TS_ReadCounter() < timer_initial) && (Timer_TS_ReadCounter() > 1500))) {
-            has_turned = 0;
-        }
-    }    
-    
     if (turning_left == 1) {
         if (is_under_line[1] == 1 || is_under_line[2] == 1) {
             has_turned = 1;
-            timer_initial = Timer_TS_ReadCounter();
+            Timer_TS_Start();
+            Timer_TS_Enable();
             turning_left = 0;
             motor_1_speed = motor_1_default_speed;
             motor_2_speed = motor_2_default_speed + motor_correction_speed;
@@ -450,7 +449,8 @@ void turns_mode() {
     else if (turning_right == 1) {
         if (is_under_line[1] == 1 || is_under_line[2] == 1) {
             has_turned = 1;
-            timer_initial = Timer_TS_ReadCounter();
+            Timer_TS_Start();
+            Timer_TS_Enable();
             turning_right = 0;
             motor_1_speed = motor_1_default_speed + motor_correction_speed;
             motor_2_speed = motor_2_default_speed;       
@@ -543,7 +543,7 @@ void calculate_distance_travelled(){
     QuadDec_M1_SetCounter(0);                                                                   // reset counter after reading from it
     QuadDec_M2_SetCounter(0);
     
-    if (usb_output == 1) {
+    /*if (usb_output == 1) {
         itoa(motor_1_distance, motor_line_1, 10);
         usb_put_string("motor_1_distance: ");
         usb_put_string(motor_line_1);
@@ -553,7 +553,7 @@ void calculate_distance_travelled(){
         usb_put_string("motor_2_distance: ");
         usb_put_string(motor_line_2);
         usb_put_string("\n\r"); 
-    }
+    }*/
 }
 //* ========================================
 void travel_straight() {

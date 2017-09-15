@@ -27,7 +27,8 @@
 *  Place your includes, defines and code here 
 ********************************************************************************/
 /* `#START isr_TS_intc` */
-
+#include "project.h"
+extern int has_turned;
 /* `#END` */
 
 #ifndef CYINT_IRQ_BASE
@@ -165,7 +166,8 @@ CY_ISR(isr_TS_Interrupt)
 
     /*  Place your Interrupt code here. */
     /* `#START isr_TS_Interrupt` */
-
+    has_turned = 0;
+    Timer_TS_Stop();
     /* `#END` */
 }
 
