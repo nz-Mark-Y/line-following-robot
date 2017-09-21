@@ -31,7 +31,14 @@ int start_count = 0;
 int usb_output = 0;
 //* ========================================
 int motor_1_distance = 0;                                                                       // distance travelled in mm
-int motor_2_distance = 0;                                                                       
+int motor_2_distance = 0;   
+int average_distance = 0;
+int current_speed = 0;
+int target_speed = 43;
+int target_distance = 1200;
+int motor_1_temp_distance = 0;
+int motor_2_temp_distance = 0;
+int correction = 20;
 //* ========================================
 // arrays for light sensors
 int max_value[] = {0,0,0,0,0,0,0};                                                              // max value sensed by each light sensor 
@@ -46,6 +53,9 @@ int motor_1_default_speed = 127;
 int motor_2_default_speed = 127;
 int motor_1_speed = 127;
 int motor_2_speed = 127;
+
+int straightspeed1 = 60;
+int straightspeed2 = 56;
 
 int back_turn_speed = 52;                                                                       // for backwards turning wheel
 int forward_turn_speed = 37;                                                                    // for forwards turning wheel
@@ -88,7 +98,13 @@ int main() {
     isr_TS_Start();
     isr_TS_Enable();    
     Timer_TS_SetInterruptMode(3);
-
+    
+    isr_TS_1_Start();
+    isr_TS_1_Enable();
+    Timer_TS_1_Start();
+    Timer_TS_1_Enable();
+    Timer_TS_1_SetInterruptMode(3);
+    
 // ------USB SETUP ----------------    
     USBUART_Start(0,USBUART_5V_OPERATION);  
     RF_BT_SELECT_Write(0);
@@ -117,7 +133,7 @@ int main() {
     if (mode_switch0_Read() == 1) {
         usb_output = 1;
     }
-    
+
     while(1) { 
         set_speeds();
         
@@ -554,21 +570,42 @@ void calculate_distance_travelled(){
         usb_put_string(motor_line_2);
         usb_put_string("\n\r"); 
     }*/
+    /*
+    itoa(average_distance, motor_line_1, 10);
+    usb_put_string("average_distance: ");
+    usb_put_string(motor_line_1);
+    usb_put_string("\n\r"); 
+    itoa(current_speed, motor_line_2, 10);
+    usb_put_string("current_speed: ");
+    usb_put_string(motor_line_2);
+    usb_put_string("\n\r");  
+    */
 }
 //* ========================================
 void travel_straight() {
     // code for benchmark test 5
-    
-    PWM_1_WriteCompare(50);
-    PWM_2_WriteCompare(45);
-    int distance_to_travel = 1200;                                                              // get distance
-    int average_distance = (motor_1_distance + motor_2_distance) / 2;
-    
-    if ((distance_to_travel - 20) <= average_distance) {
+
+    if (current_speed != 0) {
+        if (current_speed < target_speed) {
+            straightspeed1 = straightspeed1 - correction;
+            straightspeed2 = straightspeed2 - correction;
+        } else if (current_speed > target_speed) {
+            straightspeed1 = straightspeed1 + correction;
+            straightspeed2 = straightspeed2 + correction;
+        } 
+        correction = correction / 2;
+        if (correction < 1) {
+            correction = 1;
+        }
+    }
+    if ((target_distance - 20) <= average_distance) {
         PWM_1_WriteCompare(127);                                                                // stop
         PWM_2_WriteCompare(127);  
-        usb_output = 0;
+    } else {
+        PWM_1_WriteCompare(straightspeed1);                                                                
+        PWM_2_WriteCompare(straightspeed2);
     }
+  
 }
 //* ========================================
 void set_speeds() {
