@@ -174,7 +174,6 @@ CY_ISR(isr_TS_1_Interrupt)
     /* `#START isr_TS_1_Interrupt` */
     average_distance = (motor_1_distance + motor_2_distance) / 2;
     temp_average = ((motor_1_distance - motor_1_temp_distance) + (motor_2_distance - motor_2_temp_distance)) / 2;
-   
     current_speed = (int)(((float)temp_average) / 0.5);
     motor_1_temp_distance = motor_1_distance;
     motor_2_temp_distance = motor_2_distance;

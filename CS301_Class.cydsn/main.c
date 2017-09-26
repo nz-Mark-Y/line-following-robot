@@ -120,6 +120,7 @@ int main() {
     PWM_1_WriteCompare(127);                                                                    // move motor1 forward
     PWM_2_WriteCompare(127);
 
+    
 // ------ADC SETUP ----------------      
     ADC_Start();
     QuadDec_M1_Start();
@@ -133,7 +134,12 @@ int main() {
     if (mode_switch0_Read() == 1) {
         usb_output = 1;
     }
-
+    
+    voltage = get_battery_voltage();
+    if (voltage < 7700) {
+        straightspeed2 = 55;
+    }
+    
     while(1) { 
         set_speeds();
         
@@ -144,11 +150,6 @@ int main() {
         }
 
         check_mode();
-        /*
-        if(flag_rx == 1) {
-            usb_put_char(UART_GetChar());
-        }
-        */
 
         if (mode == 0) {
             curves_mode(); 
@@ -187,10 +188,8 @@ int main() {
             itoa(orient, test, 10);
             usb_put_string("Orientation: ");
             usb_put_string(test);
-            usb_put_string("\n\r");
-            
-        }
-        */
+            usb_put_string("\n\r");  
+        }*/
         
         calculate_distance_travelled();
     }
@@ -553,33 +552,10 @@ void curves_mode() {
 //* ========================================
 void calculate_distance_travelled(){
     // uses quadrature reading to determine the distance travelled by robot's two wheels
-
     motor_1_distance = motor_1_distance + fabs((float)(QuadDec_M1_GetCounter()*0.8887));        //append distance value to global distance variable
     motor_2_distance = motor_2_distance + fabs((float)(QuadDec_M2_GetCounter()*0.8887));        // *202.6327/4/3/19
     QuadDec_M1_SetCounter(0);                                                                   // reset counter after reading from it
     QuadDec_M2_SetCounter(0);
-    
-    /*if (usb_output == 1) {
-        itoa(motor_1_distance, motor_line_1, 10);
-        usb_put_string("motor_1_distance: ");
-        usb_put_string(motor_line_1);
-        usb_put_string("\n\r");
-        
-        itoa(motor_2_distance, motor_line_2, 10);
-        usb_put_string("motor_2_distance: ");
-        usb_put_string(motor_line_2);
-        usb_put_string("\n\r"); 
-    }*/
-    /*
-    itoa(average_distance, motor_line_1, 10);
-    usb_put_string("average_distance: ");
-    usb_put_string(motor_line_1);
-    usb_put_string("\n\r"); 
-    itoa(current_speed, motor_line_2, 10);
-    usb_put_string("current_speed: ");
-    usb_put_string(motor_line_2);
-    usb_put_string("\n\r");  
-    */
 }
 //* ========================================
 void travel_straight() {
@@ -605,7 +581,6 @@ void travel_straight() {
         PWM_1_WriteCompare(straightspeed1);                                                                
         PWM_2_WriteCompare(straightspeed2);
     }
-  
 }
 //* ========================================
 void set_speeds() {
