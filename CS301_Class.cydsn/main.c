@@ -161,35 +161,34 @@ int main() {
             continue;
         }
         
-        /*
-        int complete_structure = handle_radio_data();     
-        if (complete_structure == 1) {
-            int8 strength = system_state.rssi;
-            int16 xpos = system_state.robot_xpos;
-            int16 ypos = system_state.robot_ypos;
-            int16 orient = system_state.robot_orientation;
-            
+        int complete_structure = handle_radio_data(); 
+        if (usb_output == 1) {
+            if (complete_structure == 1) {
+                int8 strength = system_state.rssi;
+                int16 xpos = system_state.robot_xpos;
+                int16 ypos = system_state.robot_ypos;
+                int16 orient = system_state.robot_orientation;     
                    
-            itoa(strength, line, 10);
-            usb_put_string("RSSI: ");
-            usb_put_string(line);
-            usb_put_string("\n\r");
+                itoa(strength, line, 10);
+                usb_put_string("RSSI: ");
+                usb_put_string(line);
+                usb_put_string("\n\r");
             
-            itoa(xpos, line, 10);
-            usb_put_string("XPOS: ");
-            usb_put_string(line);
-            usb_put_string("\n\r");
+                itoa(xpos, line, 10);
+                usb_put_string("XPOS: ");
+                usb_put_string(line);
+                usb_put_string("\n\r");
             
-            itoa(ypos, line, 10);
-            usb_put_string("YPOS: ");
-            usb_put_string(line);
-            usb_put_string("\n\r");
+                itoa(ypos, line, 10);
+                usb_put_string("YPOS: ");
+                usb_put_string(line);
+                usb_put_string("\n\r");
             
-            itoa(orient, test, 10);
-            usb_put_string("Orientation: ");
-            usb_put_string(test);
-            usb_put_string("\n\r");  
-        }*/
+                itoa(orient, test, 10);
+                usb_put_string("Orientation: ");
+                usb_put_string(test);
+                usb_put_string("\n\r");  
+            }
         
         calculate_distance_travelled();
     }
