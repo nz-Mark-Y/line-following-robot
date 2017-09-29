@@ -30,12 +30,13 @@ int count = 0;
 int start_count = 0;
 int usb_output = 0;
 //* ========================================
+// Max speed of 69 cm/s
 int motor_1_distance = 0;                                                                       // distance travelled in mm
 int motor_2_distance = 0;   
 int average_distance = 0;
 int current_speed = 0;
-int target_speed = 43;
-int target_distance = 1200;
+int target_speed = 48;
+int target_distance = 2000;
 int motor_1_temp_distance = 0;
 int motor_2_temp_distance = 0;
 int correction = 20;
@@ -71,6 +72,9 @@ int is_turning_right = 0;
 int has_turned = 0;
 
 int timer_initial = 0;
+int corrected_right = 0;
+int corrected_left = 0;
+int counter = 0;
 //* ========================================
 // function definitions
 void print_light_sensor_values();
@@ -189,7 +193,7 @@ int main() {
                 usb_put_string(test);
                 usb_put_string("\n\r");  
             }
-        
+        }
         calculate_distance_travelled();
     }
 }
@@ -560,7 +564,57 @@ void calculate_distance_travelled(){
 void travel_straight() {
     // code for benchmark test 5
 
-    if (current_speed != 0) {
+    
+    /*
+    if (motor_1_distance > motor_2_distance + 20) {
+        straightspeed1 = straightspeed1 + 1;
+        straightspeed2 = straightspeed2 - 1;
+    }
+    if (motor_2_distance > motor_1_distance + 20) {
+        straightspeed2 = straightspeed2 + 1;
+        straightspeed1 = straightspeed1 - 1;
+    } */
+    /*
+    if (is_under_line[1] == 1 && is_under_line[2] == 1) {                                       // both sensors are on the line
+        if (corrected_right == 1) {
+            straightspeed2 = straightspeed2 + 8;  
+            corrected_right = 0;
+        } else if (corrected_left == 1) {
+            straightspeed1 = straightspeed1 + 8; 
+            corrected_left = 0;
+        } else {
+            if (current_speed != 0) {
+                if (current_speed < target_speed) {
+                    straightspeed1 = straightspeed1 - correction;
+                    straightspeed2 = straightspeed2 - correction;
+                } else if (current_speed > target_speed) {
+                    straightspeed1 = straightspeed1 + correction;
+                    straightspeed2 = straightspeed2 + correction;
+                } 
+                correction = correction / 2;
+                if (correction < 1) {
+                    correction = 1;
+                }
+            }
+        }
+    } else if (is_under_line[1] == 1 && is_under_line[2] == 0) {                                  // sensor 1 is on the line, sensor 2 is off the line    
+        corrected_right = 1;
+        straightspeed2 = straightspeed2 - 4;         
+    }
+    else if (is_under_line[1] == 0 && is_under_line[2] == 1) {                                  // sensor 1 is off the line, sensor 2 is on the line
+        corrected_left = 1;
+        straightspeed1 = straightspeed1 - 4;                                                  // increase motor1 speed
+    }
+    */
+     int small_correction = 1;
+    LED_Write(0);
+     if (counter % 10 == 0 && counter < 31) {
+       straightspeed2 = straightspeed2 + small_correction;
+    }
+    if (counter % 5 == 0 && counter > 31 && counter < 46) {
+       straightspeed2 = straightspeed2 - small_correction;
+    }
+     if (current_speed != 0) {
         if (current_speed < target_speed) {
             straightspeed1 = straightspeed1 - correction;
             straightspeed2 = straightspeed2 - correction;
@@ -573,6 +627,8 @@ void travel_straight() {
             correction = 1;
         }
     }
+    counter = counter + 1;
+    
     if ((target_distance - 20) <= average_distance) {
         PWM_1_WriteCompare(127);                                                                // stop
         PWM_2_WriteCompare(127);  
