@@ -7,7 +7,7 @@
       <Tool Name="prebuild" Command="" Options="" />
       <Tool Name="assembler" Command="arm-none-eabi-as.exe" Options="-mcpu=cortex-m3 -mthumb -I. -IGenerated_Source\PSoC5 -alh=${OutputDir}/${CompileFile}.lst -g -W" />
       <Tool Name="compiler" Command="arm-none-eabi-gcc.exe" Options="-mcpu=cortex-m3 -mthumb -Wno-main -I. -IGenerated_Source\PSoC5 -Wa,-alh=${OutputDir}/${CompileFile}.lst -g -D DEBUG -Wall -ffunction-sections -O0 -ffat-lto-objects" />
-      <Tool Name="linker" Command="arm-none-eabi-gcc.exe" Options="-mcpu=cortex-m3 -mthumb -g -ffunction-sections -O0 -ffat-lto-objects -L Generated_Source\PSoC5 -Wl,-Map,${OutputDir}/${ProjectShortName}.map -T Generated_Source\PSoC5\cm3gcc.ld -specs=nano.specs -Wl,--gc-sections" />
+      <Tool Name="linker" Command="arm-none-eabi-gcc.exe" Options="-mcpu=cortex-m3 -mthumb -g -ffunction-sections -O0 -ffat-lto-objects -l m -L Generated_Source\PSoC5 -Wl,-Map,${OutputDir}/${ProjectShortName}.map -T Generated_Source\PSoC5\cm3gcc.ld -specs=nano.specs -Wl,--gc-sections" />
       <Tool Name="postbuild" Command="" Options="" />
     </Toolchain>
     <Toolchain Name="ARM MDK Generic" Selected="False">
@@ -38,8 +38,10 @@
         <Files Root="\\uoa.auckland.ac.nz\engdfs\Home\myep112\Downloads\uoa-cs301-2017-group06\CS301_Class.cydsn">
           <File BuildType="BUILD" Toolchain="">.\main.c</File>
           <File BuildType="BUILD" Toolchain="">.\tacho.c</File>
+          <File BuildType="BUILD" Toolchain="">.\Astar.c</File>
           <File BuildType="BUILD" Toolchain="">.\defines.h</File>
           <File BuildType="BUILD" Toolchain="">.\vars.h</File>
+          <File BuildType="BUILD" Toolchain="">.\Astar.h</File>
         </Files>
       </Folder>
       <Folder BuildType="STRICT" Path="\\uoa.auckland.ac.nz\engdfs\Home\myep112\Downloads\uoa-cs301-2017-group06\CS301_Class.cydsn\Generated_Source\PSoC5">

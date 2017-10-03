@@ -20,6 +20,7 @@
 #include <math.h>
 #include "defines.h"
 #include "vars.h"
+#include "Astar.h"
 //* ========================================
 char rf_string[RXSTRINGSIZE];
 char line[BUF_SIZE], test[BUF_SIZE], entry[BUF_SIZE], motor_line_1[BUF_SIZE], motor_line_2[BUF_SIZE];
@@ -138,6 +139,9 @@ int main() {
     if (mode_switch0_Read() == 1) {
         usb_output = 1;
     }
+    
+    int16_t retsteps[555] = { -1 }; //retsteps is the array of steps to reach the target
+	int16_t numberOfSteps = astar(1, 13, 5, 5, retsteps);
     
     while(1) { 
         set_speeds();

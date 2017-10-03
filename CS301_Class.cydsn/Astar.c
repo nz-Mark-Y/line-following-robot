@@ -1,34 +1,14 @@
 /*
-	
-	
 	Group 6 Compsys 301
 */
 
-
-
-//#include "Astar.h"
-//#include "project.h"
-//#include "map.h"
-
-
+#include "Astar.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
 #include <limits.h>
-
-
-#define WIDTH 19
-#define HEIGHT 15
-#define SIZE 285
-
-static int16_t heuristic_score_estimate(int16_t currNode_x, int16_t currNode_y, int16_t goal_x, int16_t goal_y);
-static int16_t isOpenSetEmpty(int16_t *openSet);
-static void addNeigbours(int16_t current, int16_t *map, int16_t *gScore, int16_t *cameFromNode,  int16_t *openSet, int16_t *closedSet);
-static int16_t reconstruct_path(int16_t *cameFromNode, int16_t *traceBackSteps, int16_t startlocation, int16_t targetlocation);
-static int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlocation_x, int16_t targetlocation_y, int16_t *retsteps); 
-static int16_t next_current(int16_t *openSet, int16_t *gScore, int16_t targetlocation);
 
 int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlocation_x, int16_t targetlocation_y, int16_t *retsteps){
 		
@@ -44,7 +24,6 @@ int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlo
 	int16_t closedSet[SIZE] = {-1};	//closedSet contains the set of nodes that have already been evaluated
 	int16_t cameFromNode[SIZE] = {-1};	//cameFromNode contains the parent node from which a node can be reached most easily
 	int16_t gScore[SIZE] = {-1};	//For each node, the cost of getting from the start node to that node.
-	
 	
 	int16_t i;
 	for (i = 0; i < SIZE; i++){	//initialise array elements to -1
@@ -82,7 +61,6 @@ int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlo
 		closedSet[current] = 1;	//The new current node is added to closedSet
 		
 		addNeigbours(current, map, gScore, cameFromNode,  openSet, closedSet);	//get the current node's neighbour nodes
-		
 
 		if (current == targetlocation){	//If the targetlocation is found, exit the loop
 			
@@ -93,8 +71,7 @@ int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlo
 				retsteps[i] = traceBackSteps[stepsCount - i - 1];
 			}
 			break;
-		}
-		
+		}	
 	}	
 	
 	for (i = 0; i < stepsCount; i++){		
@@ -102,7 +79,6 @@ int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlo
 	}
 	return stepsCount;
 }
-
 
 /*
 This function finds adjacent path nodes to the current node and adds them to openSet 
@@ -220,11 +196,5 @@ static int16_t isOpenSetEmpty(int16_t *openSet){
 		}
 	}	
 	return 1;
-}
-
-int main(){
-	int16_t retsteps[555] = { -1 }; //retsteps is the array of steps to reach the target
-	int16_t numberOfSteps = astar(1, 13, 5, 5, retsteps);
-	return 0;
 }
 /* [] END OF FILE */
