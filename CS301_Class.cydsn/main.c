@@ -74,8 +74,10 @@ int has_turned = 0;
 int timer_initial = 0;
 int start_ypos = 0;
 int counter = 0;
+int state = 0;
 //* ========================================
 // function definitions
+void maze_mode_1();
 void print_light_sensor_values();
 void sensor_is_under_line(int sensorNum);
 int get_battery_voltage();
@@ -122,7 +124,6 @@ int main() {
     PWM_2_Start();
     PWM_1_WriteCompare(127);                                                                    // move motor1 forward
     PWM_2_WriteCompare(127);
-
     
 // ------ADC SETUP ----------------      
     ADC_Start();
@@ -138,11 +139,6 @@ int main() {
         usb_output = 1;
     }
     
-    voltage = get_battery_voltage();
-    if (voltage < 7700) {
-        straightspeed2 = 55;
-    }
-    
     while(1) { 
         set_speeds();
         
@@ -153,13 +149,12 @@ int main() {
         }
 
         check_mode();
-
         if (mode == 0) {
-            curves_mode(); 
+            maze_mode_1(); 
         } else if (mode == 1) {
-            turns_mode();   
+            continue;   
         } else if (mode == 2) {
-            travel_straight();
+            continue;
         } else if (mode == 3) {
             continue;
         }
@@ -197,6 +192,34 @@ int main() {
     }
 }
 
+//* ========================================
+void maze_mode_1() {
+    if (state == 0) { 
+        PWM_1_WriteCompare(straightspeed1);
+        PWM_2_WriteCompare(straightspeed2);
+        if (is_under_line[4] != 1) {
+            PWM_1_WriteCompare(motor_backwards_speed);
+            PWM_2_WriteCompare(motor_backwards_speed);
+            return;
+        }
+        if (is_under_line[3] || is_under_line[5]) {
+            PWM_1_WriteCompare(127);
+            PWM_2_WriteCompare(127);
+            state = 1;
+        }
+        if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {
+            PWM_1_WriteCompare(127);
+            PWM_2_WriteCompare(127);
+            state = 2;    
+        }
+    } else if (state == 1) {
+        
+    } else if (state == 2) {
+        
+    } else {
+     
+    }
+}
 //* ========================================
 void print_light_sensor_values() {
     // prints out light sensor values 
