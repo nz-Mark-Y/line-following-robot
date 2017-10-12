@@ -102,6 +102,7 @@
 #include "usb_switch.h"
 #include "mode_switch3_aliases.h"
 #include "mode_switch3.h"
+#include "isr_TS_2.h"
 #include "QuadDec_M1_Cnt16.h"
 #include "QuadDec_M2_Cnt16.h"
 #include "ADC_SAR.h"

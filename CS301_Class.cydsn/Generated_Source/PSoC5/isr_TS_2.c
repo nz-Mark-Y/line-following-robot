@@ -1,5 +1,5 @@
 /*******************************************************************************
-* File Name: isr_TS.c  
+* File Name: isr_TS_2.c  
 * Version 1.70
 *
 *  Description:
@@ -18,20 +18,17 @@
 
 #include <cydevice_trm.h>
 #include <CyLib.h>
-#include <isr_TS.h>
+#include <isr_TS_2.h>
 
 
-#if !defined(isr_TS__REMOVED) /* Check for removal by optimization */
+#if !defined(isr_TS_2__REMOVED) /* Check for removal by optimization */
 
 /*******************************************************************************
 *  Place your includes, defines and code here 
 ********************************************************************************/
-/* `#START isr_TS_intc` */
+/* `#START isr_TS_2_intc` */
 #include "project.h"
-extern int state;
-extern int has_been_in_light;
 extern int has_turned;
-extern int timer_to_start;
 /* `#END` */
 
 #ifndef CYINT_IRQ_BASE
@@ -46,7 +43,7 @@ CY_ISR_PROTO(IntDefaultHandler);
 
 
 /*******************************************************************************
-* Function Name: isr_TS_Start
+* Function Name: isr_TS_2_Start
 ********************************************************************************
 *
 * Summary:
@@ -62,24 +59,24 @@ CY_ISR_PROTO(IntDefaultHandler);
 *   None
 *
 *******************************************************************************/
-void isr_TS_Start(void)
+void isr_TS_2_Start(void)
 {
     /* For all we know the interrupt is active. */
-    isr_TS_Disable();
+    isr_TS_2_Disable();
 
-    /* Set the ISR to point to the isr_TS Interrupt. */
-    isr_TS_SetVector(&isr_TS_Interrupt);
+    /* Set the ISR to point to the isr_TS_2 Interrupt. */
+    isr_TS_2_SetVector(&isr_TS_2_Interrupt);
 
     /* Set the priority. */
-    isr_TS_SetPriority((uint8)isr_TS_INTC_PRIOR_NUMBER);
+    isr_TS_2_SetPriority((uint8)isr_TS_2_INTC_PRIOR_NUMBER);
 
     /* Enable it. */
-    isr_TS_Enable();
+    isr_TS_2_Enable();
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_StartEx
+* Function Name: isr_TS_2_StartEx
 ********************************************************************************
 *
 * Summary:
@@ -105,24 +102,24 @@ void isr_TS_Start(void)
 *   None
 *
 *******************************************************************************/
-void isr_TS_StartEx(cyisraddress address)
+void isr_TS_2_StartEx(cyisraddress address)
 {
     /* For all we know the interrupt is active. */
-    isr_TS_Disable();
+    isr_TS_2_Disable();
 
-    /* Set the ISR to point to the isr_TS Interrupt. */
-    isr_TS_SetVector(address);
+    /* Set the ISR to point to the isr_TS_2 Interrupt. */
+    isr_TS_2_SetVector(address);
 
     /* Set the priority. */
-    isr_TS_SetPriority((uint8)isr_TS_INTC_PRIOR_NUMBER);
+    isr_TS_2_SetPriority((uint8)isr_TS_2_INTC_PRIOR_NUMBER);
 
     /* Enable it. */
-    isr_TS_Enable();
+    isr_TS_2_Enable();
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_Stop
+* Function Name: isr_TS_2_Stop
 ********************************************************************************
 *
 * Summary:
@@ -135,22 +132,22 @@ void isr_TS_StartEx(cyisraddress address)
 *   None
 *
 *******************************************************************************/
-void isr_TS_Stop(void)
+void isr_TS_2_Stop(void)
 {
     /* Disable this interrupt. */
-    isr_TS_Disable();
+    isr_TS_2_Disable();
 
     /* Set the ISR to point to the passive one. */
-    isr_TS_SetVector(&IntDefaultHandler);
+    isr_TS_2_SetVector(&IntDefaultHandler);
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_Interrupt
+* Function Name: isr_TS_2_Interrupt
 ********************************************************************************
 *
 * Summary:
-*   The default Interrupt Service Routine for isr_TS.
+*   The default Interrupt Service Routine for isr_TS_2.
 *
 *   Add custom code between the coments to keep the next version of this file
 *   from over writting your code.
@@ -161,31 +158,27 @@ void isr_TS_Stop(void)
 *   None
 *
 *******************************************************************************/
-CY_ISR(isr_TS_Interrupt)
+CY_ISR(isr_TS_2_Interrupt)
 {
-    #ifdef isr_TS_INTERRUPT_INTERRUPT_CALLBACK
-        isr_TS_Interrupt_InterruptCallback();
-    #endif /* isr_TS_INTERRUPT_INTERRUPT_CALLBACK */ 
+    #ifdef isr_TS_2_INTERRUPT_INTERRUPT_CALLBACK
+        isr_TS_2_Interrupt_InterruptCallback();
+    #endif /* isr_TS_2_INTERRUPT_INTERRUPT_CALLBACK */ 
 
     /*  Place your Interrupt code here. */
-    /* `#START isr_TS_Interrupt` */
-    state = 0;
-    has_been_in_light = 0;
-    has_turned = 1;
-    timer_to_start = 1;
-    Timer_TS_Stop();
+    /* `#START isr_TS_2_Interrupt` */
+    has_turned = 0;
     /* `#END` */
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_SetVector
+* Function Name: isr_TS_2_SetVector
 ********************************************************************************
 *
 * Summary:
-*   Change the ISR vector for the Interrupt. Note calling isr_TS_Start
+*   Change the ISR vector for the Interrupt. Note calling isr_TS_2_Start
 *   will override any effect this method would have had. To set the vector 
-*   before the component has been started use isr_TS_StartEx instead.
+*   before the component has been started use isr_TS_2_StartEx instead.
 * 
 *   When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
 *   used to provide consistent definition across compilers:
@@ -205,18 +198,18 @@ CY_ISR(isr_TS_Interrupt)
 *   None
 *
 *******************************************************************************/
-void isr_TS_SetVector(cyisraddress address)
+void isr_TS_2_SetVector(cyisraddress address)
 {
     cyisraddress * ramVectorTable;
 
     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
 
-    ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_TS__INTC_NUMBER] = address;
+    ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_TS_2__INTC_NUMBER] = address;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_GetVector
+* Function Name: isr_TS_2_GetVector
 ********************************************************************************
 *
 * Summary:
@@ -229,26 +222,26 @@ void isr_TS_SetVector(cyisraddress address)
 *   Address of the ISR in the interrupt vector table.
 *
 *******************************************************************************/
-cyisraddress isr_TS_GetVector(void)
+cyisraddress isr_TS_2_GetVector(void)
 {
     cyisraddress * ramVectorTable;
 
     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
 
-    return ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_TS__INTC_NUMBER];
+    return ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_TS_2__INTC_NUMBER];
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_SetPriority
+* Function Name: isr_TS_2_SetPriority
 ********************************************************************************
 *
 * Summary:
 *   Sets the Priority of the Interrupt. 
 *
-*   Note calling isr_TS_Start or isr_TS_StartEx will 
+*   Note calling isr_TS_2_Start or isr_TS_2_StartEx will 
 *   override any effect this API would have had. This API should only be called
-*   after isr_TS_Start or isr_TS_StartEx has been called. 
+*   after isr_TS_2_Start or isr_TS_2_StartEx has been called. 
 *   To set the initial priority for the component, use the Design-Wide Resources
 *   Interrupt Editor.
 *
@@ -263,14 +256,14 @@ cyisraddress isr_TS_GetVector(void)
 *   None
 *
 *******************************************************************************/
-void isr_TS_SetPriority(uint8 priority)
+void isr_TS_2_SetPriority(uint8 priority)
 {
-    *isr_TS_INTC_PRIOR = priority << 5;
+    *isr_TS_2_INTC_PRIOR = priority << 5;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_GetPriority
+* Function Name: isr_TS_2_GetPriority
 ********************************************************************************
 *
 * Summary:
@@ -285,19 +278,19 @@ void isr_TS_SetPriority(uint8 priority)
 *    PSoC 4: Priority is from 0 to 3.
 *
 *******************************************************************************/
-uint8 isr_TS_GetPriority(void)
+uint8 isr_TS_2_GetPriority(void)
 {
     uint8 priority;
 
 
-    priority = *isr_TS_INTC_PRIOR >> 5;
+    priority = *isr_TS_2_INTC_PRIOR >> 5;
 
     return priority;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_Enable
+* Function Name: isr_TS_2_Enable
 ********************************************************************************
 *
 * Summary:
@@ -312,15 +305,15 @@ uint8 isr_TS_GetPriority(void)
 *   None
 *
 *******************************************************************************/
-void isr_TS_Enable(void)
+void isr_TS_2_Enable(void)
 {
     /* Enable the general interrupt. */
-    *isr_TS_INTC_SET_EN = isr_TS__INTC_MASK;
+    *isr_TS_2_INTC_SET_EN = isr_TS_2__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_GetState
+* Function Name: isr_TS_2_GetState
 ********************************************************************************
 *
 * Summary:
@@ -333,15 +326,15 @@ void isr_TS_Enable(void)
 *   1 if enabled, 0 if disabled.
 *
 *******************************************************************************/
-uint8 isr_TS_GetState(void)
+uint8 isr_TS_2_GetState(void)
 {
     /* Get the state of the general interrupt. */
-    return ((*isr_TS_INTC_SET_EN & (uint32)isr_TS__INTC_MASK) != 0u) ? 1u:0u;
+    return ((*isr_TS_2_INTC_SET_EN & (uint32)isr_TS_2__INTC_MASK) != 0u) ? 1u:0u;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_Disable
+* Function Name: isr_TS_2_Disable
 ********************************************************************************
 *
 * Summary:
@@ -354,15 +347,15 @@ uint8 isr_TS_GetState(void)
 *   None
 *
 *******************************************************************************/
-void isr_TS_Disable(void)
+void isr_TS_2_Disable(void)
 {
     /* Disable the general interrupt. */
-    *isr_TS_INTC_CLR_EN = isr_TS__INTC_MASK;
+    *isr_TS_2_INTC_CLR_EN = isr_TS_2__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_SetPending
+* Function Name: isr_TS_2_SetPending
 ********************************************************************************
 *
 * Summary:
@@ -381,14 +374,14 @@ void isr_TS_Disable(void)
 *   interrupts).
 *
 *******************************************************************************/
-void isr_TS_SetPending(void)
+void isr_TS_2_SetPending(void)
 {
-    *isr_TS_INTC_SET_PD = isr_TS__INTC_MASK;
+    *isr_TS_2_INTC_SET_PD = isr_TS_2__INTC_MASK;
 }
 
 
 /*******************************************************************************
-* Function Name: isr_TS_ClearPending
+* Function Name: isr_TS_2_ClearPending
 ********************************************************************************
 *
 * Summary:
@@ -406,9 +399,9 @@ void isr_TS_SetPending(void)
 *   None
 *
 *******************************************************************************/
-void isr_TS_ClearPending(void)
+void isr_TS_2_ClearPending(void)
 {
-    *isr_TS_INTC_CLR_PD = isr_TS__INTC_MASK;
+    *isr_TS_2_INTC_CLR_PD = isr_TS_2__INTC_MASK;
 }
 
 #endif /* End check for removal by optimization */
