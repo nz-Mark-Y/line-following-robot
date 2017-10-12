@@ -42,6 +42,7 @@ int motor_1_temp_distance = 0;
 int motor_2_temp_distance = 0;
 int correction = 20;
 //* ========================================
+int last_on_line = 1;
 // arrays for light sensors
 int max_value[] = {0,0,0,0,0,0,0};                                                              // max value sensed by each light sensor 
 int min_value[] = {0,0,0,0,0,0,0};                                                              // min value sensed by each light sensor 
@@ -56,8 +57,8 @@ int motor_2_default_speed = 127;
 int motor_1_speed = 127;
 int motor_2_speed = 127;
 
-int straightspeed1 = 50;
-int straightspeed2 = 46;
+int straightspeed1 = 70;
+int straightspeed2 = 66;
 
 int back_turn_speed = 52;                                                                       // for backwards turning wheel
 int forward_turn_speed = 37;                                                                    // for forwards turning wheel
@@ -71,6 +72,8 @@ int is_reverse = 0;
 int is_turning_left = 0;
 int is_turning_right = 0;
 int has_turned = 0;
+int has_turned_left = 0;
+int has_turned_right = 0;
 
 int timer_initial = 0;
 int start_ypos = 0;
@@ -93,7 +96,9 @@ void usb_put_string(char *s);
 void usb_put_char(char c);
 void handle_usb();
 void turn_left();
+void turn_left_slow();
 void turn_right();
+void turn_right_slow();
 void go_straight();
 void handle_turns();
 void curves_mode();
@@ -110,14 +115,13 @@ int main() {
     isr_TS_Start();
     isr_TS_Enable();    
     Timer_TS_SetInterruptMode(3);
-    
+    /*
     isr_TS_1_Start();
     isr_TS_1_Enable();
-    isr_TS_2_Start();
-    isr_TS_2_Enable();
     Timer_TS_1_Start();
     Timer_TS_1_Enable();
     Timer_TS_1_SetInterruptMode(3);
+    */
     
 // ------USB SETUP ----------------    
     USBUART_Start(0,USBUART_5V_OPERATION);  
@@ -160,6 +164,12 @@ int main() {
             sensor_is_under_line(m);
         }
         
+        if ((is_under_line[1] == 1)  && (is_under_line[2] != 1)) {
+            last_on_line = 1;
+        } else if ((is_under_line[1] != 1)  && (is_under_line[2] == 1)) {
+            last_on_line = 2;
+        }
+        
         check_mode();
         if (mode == 0) {
             maze_mode_1(); 
@@ -171,7 +181,7 @@ int main() {
             PWM_1_WriteCompare(255);
             PWM_2_WriteCompare(255);
         }
-        
+        /*
         int complete_structure = handle_radio_data(); 
         if (usb_output == 1) {
             if (complete_structure == 1) {
@@ -200,31 +210,39 @@ int main() {
                 usb_put_string(test);
                 usb_put_string("\n\r");  
             }
-        }
+        }      
         calculate_distance_travelled();
+         */
     }
 }
 
 //* ========================================
 void maze_mode_1() { // 7.7V
     if (state == 0) { 
-        if (timer_to_start == 1) {
-            Timer_TS_Start();
-            Timer_TS_Enable();
-            timer_to_start = 0;   
-        }
         maze_straight();
-/*
+        
+        if (is_under_line[3] == 1) {
+            LED_Write(1);
+        } else {
+            LED_Write(0);
+        }
+        /*
+        if ((has_turned_left == 1) && (is_under_line[6] == 0)) {
+            PWM_1_WriteCompare(straightspeed1);
+            PWM_2_WriteCompare(straightspeed2 + 35);            
+        }*/
+        /*
         if (is_under_line[4] != 1) {
             PWM_1_WriteCompare(motor_backwards_speed);
             PWM_2_WriteCompare(motor_backwards_speed);
             return;
         }*/
+        sensor_is_under_line(3);
+        sensor_is_under_line(5);
         if (is_under_line[3] || is_under_line[5]) {
-            if (has_turned == 1) {
+            if ((has_turned_left == 1) || (has_turned_right == 1)) {
                 
             } else {
-                LED_Write(1);
                 PWM_1_WriteCompare(127);
                 PWM_2_WriteCompare(127);
                 state = 1;   
@@ -233,17 +251,16 @@ void maze_mode_1() { // 7.7V
         if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
-            state = 3;    
+            state = 3;  
         }
     } else if (state == 1) {
         PWM_1_WriteCompare(175);
         PWM_2_WriteCompare(170);
+        sensor_is_under_line(3);
+        sensor_is_under_line(5);
         if (is_under_line[3] || is_under_line[5]) {
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
-            LED_Write(0);
-            Timer_TS_Start();
-            Timer_TS_Enable();
             state = 2;
         }
     } else if (state == 2) {
@@ -252,9 +269,11 @@ void maze_mode_1() { // 7.7V
         } else if (next_turn == 1) { // Left turn
             if (is_under_line[1] == 1 || is_under_line[2] == 1) {
                 if (has_been_in_light == 1) {
-                    maze_straight();
-                    has_turned = 1;
-                    timer_to_start = 1;
+                    has_been_in_light = 0;
+                    state = 0;
+                    has_turned_left = 1;
+                    Timer_TS_Start();
+                    Timer_TS_Enable();
                 } else {
                     turn_left();
                 }
@@ -266,9 +285,29 @@ void maze_mode_1() { // 7.7V
             
         }
     } else if (state == 3) {
-        
+        if (is_under_line[1] == 1 || is_under_line[2] == 1) {
+            state = 0;
+        } else {
+            sensor_is_under_line(3);
+            sensor_is_under_line(5);
+            if (is_under_line[3] || is_under_line[5]) {
+                if ((has_turned_left == 1) || (has_turned_right == 1)) {
+                    
+                } else {
+                    PWM_1_WriteCompare(127);
+                    PWM_2_WriteCompare(127);
+                    state = 2;   
+                    return;
+                }
+            }
+            if (last_on_line == 1) {
+                turn_left_slow();    
+            } else {
+                turn_right_slow();    
+            }
+        }
     } else {
-     
+       
     }
 }
 //* ========================================
@@ -276,23 +315,23 @@ void maze_straight() {
     if ((is_under_line[1] == 1) && (is_under_line[2] == 1)) {
         if (correcting_left == 1) {
             PWM_1_WriteCompare(straightspeed1);
-            PWM_2_WriteCompare(straightspeed2 + 30);
+            PWM_2_WriteCompare(straightspeed2 + 25);
             correcting_left = 0;
         } else if (correcting_right == 1) {
             PWM_1_WriteCompare(straightspeed1);
-            PWM_2_WriteCompare(straightspeed2 - 30);
+            PWM_2_WriteCompare(straightspeed2 - 25);
             correcting_right = 0;
         } else {
             PWM_1_WriteCompare(straightspeed1);
             PWM_2_WriteCompare(straightspeed2);
         }
-    } else if (is_under_line[1] == 1 && is_under_line[2] == 0) {   
+    } else if (is_under_line[1] == 1 && is_under_line[2] == 0) {  
         PWM_1_WriteCompare(straightspeed1);
-        PWM_2_WriteCompare(straightspeed2 - 25);
+        PWM_2_WriteCompare(straightspeed2 - 15);
         correcting_left = 1;
     } else if (is_under_line[1] == 0 && is_under_line[2] == 1) {
         PWM_1_WriteCompare(straightspeed1);
-        PWM_2_WriteCompare(straightspeed2 + 25);
+        PWM_2_WriteCompare(straightspeed2 + 15);
         correcting_right = 1;
     }
 }
@@ -523,16 +562,32 @@ void turn_left(){
     // function to turn the robot to the left
     // change to reasonable turning speed for both motors
     
-    PWM_1_WriteCompare(127 + 50);                                                  // move motor1 backward
-    PWM_2_WriteCompare(127 - 55);                                               // move motor2 forward  
+    PWM_1_WriteCompare(127 + 40);                                               // move motor1 backward
+    PWM_2_WriteCompare(127 - 45);                                               // move motor2 forward  
+}
+//* ========================================
+void turn_left_slow(){
+    // function to turn the robot to the left
+    // change to reasonable turning speed for both motors
+    
+    PWM_1_WriteCompare(127 + 30);                                               // move motor1 backward
+    PWM_2_WriteCompare(127 - 35);                                               // move motor2 forward  
 }
 //* ========================================
 void turn_right() {
     // function to turn the robot to the right
     // change to reasonable turning speed for both motors
 
-    PWM_1_WriteCompare(127 - forward_turn_speed);                                               // move motor 1 forward
-    PWM_2_WriteCompare(127 + back_turn_speed + 5);                                              // move motor 2 backward 
+    PWM_1_WriteCompare(127 - 40);                                               // move motor 1 forward
+    PWM_2_WriteCompare(127 + 45);                                              // move motor 2 backward 
+}
+//* ========================================
+void turn_right_slow() {
+    // function to turn the robot to the right
+    // change to reasonable turning speed for both motors
+
+    PWM_1_WriteCompare(127 - 30);                                               // move motor 1 forward
+    PWM_2_WriteCompare(127 + 35);                                              // move motor 2 backward 
 }
 //* ========================================
 void go_straight() {

@@ -278,8 +278,6 @@
           <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC5\Timer_TS_1.c</File>
           <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC5\Timer_TS_1.h</File>
           <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC5\Timer_TS_1_PM.c</File>
-          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC5\isr_TS_2.c</File>
-          <File BuildType="BUILD" Toolchain="">.\Generated_Source\PSoC5\isr_TS_2.h</File>
         </Files>
       </Folder>
       <Folder BuildType="STRICT" Path="\\uoa.auckland.ac.nz\engdfs\Home\myep112\Downloads\uoa-cs301-2017-group06\CS301_Class.cydsn\Export\ARM_GCC_Generic">

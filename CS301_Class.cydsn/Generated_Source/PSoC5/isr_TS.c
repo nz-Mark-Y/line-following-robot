@@ -28,10 +28,8 @@
 ********************************************************************************/
 /* `#START isr_TS_intc` */
 #include "project.h"
-extern int state;
-extern int has_been_in_light;
-extern int has_turned;
-extern int timer_to_start;
+extern int has_turned_left;
+extern int has_turned_right;
 /* `#END` */
 
 #ifndef CYINT_IRQ_BASE
@@ -169,11 +167,8 @@ CY_ISR(isr_TS_Interrupt)
 
     /*  Place your Interrupt code here. */
     /* `#START isr_TS_Interrupt` */
-    state = 0;
-    has_been_in_light = 0;
-    has_turned = 1;
-    timer_to_start = 1;
-    Timer_TS_Stop();
+    has_turned_left = 0;
+    has_turned_right = 0;
     /* `#END` */
 }
 
