@@ -79,7 +79,7 @@ int timer_initial = 0;
 int start_ypos = 0;
 int counter = 10;
 int state = 0;
-int next_turn = 1;
+int next_turn = 2;
 int correcting_left = 0;
 int correcting_right = 0;
 int has_been_in_light = 0;
@@ -156,7 +156,7 @@ int main() {
 	int16_t numberOfSteps = astar(1, 13, 5, 5, retsteps);
     */
     while(1) { 
-        set_speeds();
+        //set_speeds();
         
         // update each sensor values of max_value, ADC_value and is_under_line
         int m;   
@@ -221,24 +221,11 @@ void maze_mode_1() { // 7.7V
     if (state == 0) { 
         maze_straight();
         
-        if (is_under_line[3] == 1) {
+        if ((is_under_line[5] == 1) && (has_turned_right == 0)) {
             LED_Write(1);
         } else {
             LED_Write(0);
         }
-        /*
-        if ((has_turned_left == 1) && (is_under_line[6] == 0)) {
-            PWM_1_WriteCompare(straightspeed1);
-            PWM_2_WriteCompare(straightspeed2 + 35);            
-        }*/
-        /*
-        if (is_under_line[4] != 1) {
-            PWM_1_WriteCompare(motor_backwards_speed);
-            PWM_2_WriteCompare(motor_backwards_speed);
-            return;
-        }*/
-        sensor_is_under_line(3);
-        sensor_is_under_line(5);
         if (is_under_line[3] || is_under_line[5]) {
             if ((has_turned_left == 1) || (has_turned_right == 1)) {
                 
@@ -281,8 +268,21 @@ void maze_mode_1() { // 7.7V
                 turn_left();
                 has_been_in_light = 1;            
             }
-        } else if (next_turn == 2) {
-            
+        } else if (next_turn == 2) { // Right turn
+            if (is_under_line[1] == 1 || is_under_line[2] == 1) {
+                if (has_been_in_light == 1) {
+                    has_been_in_light = 0;
+                    state = 0;
+                    has_turned_right = 1;
+                    Timer_TS_Start();
+                    Timer_TS_Enable();
+                } else {
+                    turn_right();
+                }
+            } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {
+                turn_right();
+                has_been_in_light = 1;            
+            }
         }
     } else if (state == 3) {
         if (is_under_line[1] == 1 || is_under_line[2] == 1) {
