@@ -30,6 +30,8 @@
 #include "project.h"
 extern int has_turned_left;
 extern int has_turned_right;
+extern int has_gone_straight;
+extern int i;
 /* `#END` */
 
 #ifndef CYINT_IRQ_BASE
@@ -169,6 +171,7 @@ CY_ISR(isr_TS_Interrupt)
     /* `#START isr_TS_Interrupt` */
     has_turned_left = 0;
     has_turned_right = 0;
+    has_gone_straight = 0;
     /* `#END` */
 }
 

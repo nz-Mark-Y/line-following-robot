@@ -1,40 +1,16 @@
 /*
 	Group 6 Compsys 301
 */
-
 #include <stdint.h>
 #include <stdio.h>
-#define WIDTH 19
-#define HEIGHT 15
-#define SIZE 285
-
-void addStep(int16_t *retsteps);
-void recursiveDFSCall(int16_t* retsteps);
-int16_t dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps);
+#include "DFS.h"
+extern int16_t map[15][19];
 
 int16_t numOfSteps;
 int16_t currentX, currentY;
 int16_t traversal_map[15][19];
 
-int16_t dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps){
-	int16_t map[15][19] = {
-	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	{1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1},
-	{1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1},
-	{1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,1},
-	{1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1},
-	{1,0,0,0,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1},
-	{1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1},
-	{1,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1},
-	{1,1,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1},
-	{1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1},
-	{1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1},
-	{1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1},
-	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	};
-		
+int16_t dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps){	
 	
 	int16_t i, j;
 	for (i = 0; i < HEIGHT; i++){
@@ -48,6 +24,10 @@ int16_t dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps)
 	
 	numOfSteps = 0;
 	
+    for (i=0;i<555;i++) {
+        retsteps[i] = -1;
+    }
+    
 	recursiveDFSCall(retsteps);	
 	
 	return numOfSteps;
@@ -73,7 +53,7 @@ void addStep(int16_t *retsteps){
 		return;
 	}
 	
-	printf("%d: %d,%d-- 	", numOfSteps, currentX, currentY);
+	//printf("%d: %d,%d-- 	", numOfSteps, currentX, currentY);
 	retsteps[numOfSteps] = currentY * WIDTH + currentX;// add new step to array of steps
 	
 	traversal_map[currentY][currentX] = 2;	//mark the corresponding coordinate on the traversal_map as having been visited
@@ -121,12 +101,4 @@ void recursiveDFSCall(int16_t* retsteps){
 		currentY = tempY;
 		addStep(retsteps);		
 	}	
-}
-
-
-int main(){
-	int16_t retsteps[555] ; //retsteps is the array of steps needed to traverse the map
-
-	int16_t numberOfSteps = dfs(1,13, retsteps);
-	return 0;
 }

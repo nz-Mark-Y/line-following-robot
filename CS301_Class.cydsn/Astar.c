@@ -1,14 +1,14 @@
 /*
 	Group 6 Compsys 301
 */
-
-#include "Astar.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
 #include <limits.h>
+#include "Astar.h"
+extern int16_t map[15][19];
 
 int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlocation_x, int16_t targetlocation_y, int16_t *retsteps){
 		
@@ -31,25 +31,7 @@ int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlo
 		closedSet[i] = -1;
 		cameFromNode[i] = -1;
 		gScore[i] = -1;
-	}
-	
-	int16_t map[15][19] = {
-	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	{1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1},
-	{1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1},
-	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1},
-	{1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1},
-	{1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,1},
-	{1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1},
-	{1,0,0,0,0,0,1,0,1,0,1,0,1,0,1,0,0,0,1},
-	{1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1},
-	{1,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1},
-	{1,1,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1},
-	{1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1},
-	{1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1},
-	{1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1},
-	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-	};	
+	}	
 
 	openSet[startlocation] = 1;	//start node is added to openSet
 	gScore[startlocation] = 0;	// The cost of going from the start node to the start node is zero
