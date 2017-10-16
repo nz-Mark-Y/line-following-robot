@@ -62,6 +62,7 @@ int motor_2_speed = 127;
 int straightspeed1 = 70;
 int straightspeed2 = 66;
 
+
 int back_turn_speed = 52;                                                                       // for backwards turning wheel
 int forward_turn_speed = 37;                                                                    // for forwards turning wheel
 int motor_correction_speed = 25;                                                                // for correction
@@ -77,6 +78,8 @@ int has_turned = 0;
 int has_turned_left = 0;
 int has_turned_right = 0;
 int has_gone_straight = 0;
+int to_turn_left = 0;
+int to_turn_right = 0;
 
 int timer_initial = 0;
 int start_ypos = 0;
@@ -134,8 +137,8 @@ int main() {
     RF_BT_SELECT_Write(0);
     
 // ------MOTOR SETUP --------------     
-    CONTROL_Write(0b00000011);                                                                  // disable motor    
-    CyDelay(2000);
+    //CONTROL_Write(0b00000011);                                                                  // disable motor    
+    //CyDelay(2000);
     
     CONTROL_Write(0b00000000);                                                                  // enable motor
     Clock_PWM_Start();                                                                          // Start clock for PWM
@@ -164,7 +167,7 @@ int main() {
     */
     
     int16_t retsteps[555] ; //retsteps is the array of steps needed to traverse the map
-	int16_t numberOfSteps = dfs(1,1, retsteps);
+	int16_t numberOfSteps = dfs(17,13, retsteps);
     
     for (i=0;i<turn_max;i++) {
         turn_array[i] = -1;
@@ -240,18 +243,42 @@ int main() {
     
     while(1) { 
         //set_speeds();
+        /*
+        if (usb_output == 1) {
+            if (turn_array[i] != -1) {
+                if (i>-1) {
+                    itoa(turn_array[i], line, 10);
+                    usb_put_string(line);
+                    usb_put_string("\n\r");
+                    i++;
+                }
+                if (i>turn_max) {
+                    i = 0;
+                }
+            }
+        }
+        */  
+        /*    
+        if (retsteps[i] != -1) {
+            x1 = retsteps[i] % 19;
+            y1 = retsteps[i] / 19;
+
+            itoa(x1, line, 10);
+            itoa(y1, test, 10);
+            usb_put_string(line);
+            usb_put_string(":");
+            usb_put_string(test);
+            usb_put_string("\n\r");  
+            i++;
+        }
+        */
         
         // update each sensor values of max_value, ADC_value and is_under_line
         int m;   
         for (m = 1; m < 7; m++){
             sensor_is_under_line(m);
         }
-        
-        //added just for u turn testing
-        if (has_been_in_light == 3) {
-            LED_Write(1);
-        }
-        
+
         if ((is_under_line[1] == 1)  && (is_under_line[2] != 1)) {
             last_on_line = 1;
         } else if ((is_under_line[1] != 1)  && (is_under_line[2] == 1)) {
@@ -310,6 +337,30 @@ void maze_mode_1() { // 7.7V
     if (state == 0) { 
         maze_straight();
         
+        if (next_turn == 1) { //turn left, only check sensor 3
+            if ((is_under_line[3] == 1 && is_under_line[4] == 1) || (is_under_line[3] == 1 && is_under_line[6] == 1)) {
+                if ((has_turned_left == 1) || (has_turned_right == 1) || (has_gone_straight == 1)) {
+                    
+                } else {
+                    PWM_1_WriteCompare(127);
+                    PWM_2_WriteCompare(127);
+                    state = 1;   
+                }
+            }
+        }
+        else if (next_turn == 2) {
+            if ((is_under_line[5] == 1 && is_under_line[4] == 1) || (is_under_line[5] == 1 && is_under_line[6] == 1)) {
+                if ((has_turned_left == 1) || (has_turned_right == 1) || (has_gone_straight == 1)) {
+                    
+                } else {
+                    PWM_1_WriteCompare(127);
+                    PWM_2_WriteCompare(127);
+                    state = 1;   
+                }            
+            }
+        }
+        
+        /*
         if (is_under_line[3] || is_under_line[5]) {
             if ((has_turned_left == 1) || (has_turned_right == 1) || (has_gone_straight == 1)) {
                 
@@ -319,17 +370,25 @@ void maze_mode_1() { // 7.7V
                 state = 1;   
             }
         }
+        */
+        
         if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
             state = 3;  
         }
+        
     } else if (state == 1) {
-        PWM_1_WriteCompare(175);
-        PWM_2_WriteCompare(170);
+        PWM_1_WriteCompare(180);
+        PWM_2_WriteCompare(175);
         sensor_is_under_line(3);
         sensor_is_under_line(5);
         if (is_under_line[3] || is_under_line[5]) {
+            if (is_under_line[3] == 1) {
+                to_turn_left = 1;
+            } else if (is_under_line[5] == 1) {
+                to_turn_right = 1;
+            }
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
             state = 2;
@@ -355,7 +414,7 @@ void maze_mode_1() { // 7.7V
                     if (i > turn_max) {
                         i = 0;
                     }
-                    Timer_TS_WritePeriod(75);
+                    Timer_TS_WritePeriod(150);
                     Timer_TS_Start();
                 } else {
                     turn_left();
@@ -374,7 +433,7 @@ void maze_mode_1() { // 7.7V
                     if (i > turn_max) {
                         i = 0;
                     }
-                    Timer_TS_WritePeriod(75);
+                    Timer_TS_WritePeriod(150);
                     Timer_TS_Start();
                 } else {
                     turn_right();
@@ -386,7 +445,12 @@ void maze_mode_1() { // 7.7V
         } else if (next_turn == 3) { // u turn
             if (is_under_line[1] == 1 || is_under_line[2] == 1) {
                 if (has_been_in_light == 1) {
-                    turn_right();
+                    if (to_turn_left == 1) {
+                        turn_left();
+                    }
+                    else if (to_turn_right == 1) {
+                        turn_right();
+                    }
                     has_been_in_light = 2;
                 } else if (has_been_in_light == 3) {
                     
@@ -397,15 +461,24 @@ void maze_mode_1() { // 7.7V
                     if (i > turn_max) {
                         i = 0;
                     }
-                    Timer_TS_WritePeriod(75);
+                    Timer_TS_WritePeriod(150);
                     Timer_TS_Start();
                 } else {
-                    turn_right();
+                    if (to_turn_left == 1) {
+                        turn_left();
+                    } else if (to_turn_right == 1) {
+                        turn_right();
+                    }
                 }
-                
             } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {
-                turn_right();
+                    if (to_turn_left == 1) {
+                        turn_left();
+                    } else if (to_turn_right == 1) {
+                        turn_right();
+                    }
                 if (has_been_in_light == 2) {
+                    has_been_in_light = 3;
+                } else if (has_been_in_light == 3) {
                     has_been_in_light = 3;
                 } else {
                     has_been_in_light = 1;  
