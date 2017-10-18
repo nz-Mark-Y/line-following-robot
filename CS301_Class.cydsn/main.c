@@ -89,6 +89,7 @@ int timer_to_start = 0;
 int turn_array[555];
 int turn_max = 555;
 int i = 0; //turn array index
+int ab = 0;
 int light_counter = 0;
 //* ========================================
 // function definitions
@@ -246,8 +247,9 @@ int main() {
         int k = 0;
         int startx = 1;
         int starty = 1;
-        for (k=0;k<5;k++) {
-            int16_t numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
+        for (k=1;k<2;k++) {
+            //int16_t numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
+            int16_t numberOfSteps = astar(4, 5, 3, 13, retsteps);
             startx = food_list[k][0];
             starty = food_list[k][1];
             /*
@@ -355,7 +357,7 @@ int main() {
             i++;
         } 
     }
-    i=-20; 
+    ab=-20; 
     CyDelay(5000);
     
     while(1) { 
@@ -376,10 +378,10 @@ int main() {
         }
         */
 
-        if (totalsteps[i] != -1) {
-            if (i>-1) {
-                x1 = totalsteps[i] % 19;
-                y1 = totalsteps[i] / 19;
+        if (totalsteps[ab] != -1) {
+            if (ab>-1) {
+                x1 = totalsteps[ab] % 19;
+                y1 = totalsteps[ab] / 19;
 
                 itoa(x1, line, 10);
                 itoa(y1, test, 10);
@@ -388,11 +390,11 @@ int main() {
                 usb_put_string(test);
                 usb_put_string("\n\r");  
             }
-            i++;  
+            ab++;  
         }
 
         // update each sensor values of max_value, ADC_value and is_under_line
-        next_turn = turn_array[i];
+        next_turn = turn_array[ab];
         
         sensor_is_under_line(6);
         sensor_is_under_line(4);
