@@ -23,10 +23,6 @@ int16_t dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps)
 	currentY = startlocation_y;		
 	
 	numOfSteps = 0;
-	
-    for (i=0;i<555;i++) {
-        retsteps[i] = -1;
-    }
     
 	recursiveDFSCall(retsteps);	
 	

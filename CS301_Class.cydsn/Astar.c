@@ -11,7 +11,7 @@
 extern int16_t map[15][19];
 
 int16_t astar(int16_t startlocation_x, int16_t startlocation_y, int16_t targetlocation_x, int16_t targetlocation_y, int16_t *retsteps){
-		
+    
 	int16_t traceBackSteps[555] = { -1 }; // all elements initialised to -1
 	
 	int16_t startlocation = startlocation_y * WIDTH + startlocation_x;	//the x and y co-ordinates for the startlocation location are combined to give a single number

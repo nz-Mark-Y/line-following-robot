@@ -28,9 +28,7 @@
 ********************************************************************************/
 /* `#START isr_TS_intc` */
 #include "project.h"
-extern int has_turned_left;
-extern int has_turned_right;
-extern int has_gone_straight;
+extern int has_turned;
 extern int i;
 /* `#END` */
 
@@ -169,9 +167,7 @@ CY_ISR(isr_TS_Interrupt)
 
     /*  Place your Interrupt code here. */
     /* `#START isr_TS_Interrupt` */
-    has_turned_left = 0;
-    has_turned_right = 0;
-    has_gone_straight = 0;
+    has_turned = 0;
     /* `#END` */
 }
 

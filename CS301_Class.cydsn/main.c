@@ -59,9 +59,8 @@ int motor_2_default_speed = 127;
 int motor_1_speed = 127;
 int motor_2_speed = 127;
 
-int straightspeed1 = 70;
-int straightspeed2 = 66;
-
+int straightspeed1 = 75;
+int straightspeed2 = 71;
 
 int back_turn_speed = 52;                                                                       // for backwards turning wheel
 int forward_turn_speed = 37;                                                                    // for forwards turning wheel
@@ -75,9 +74,6 @@ int is_reverse = 0;
 int is_turning_left = 0;
 int is_turning_right = 0;
 int has_turned = 0;
-int has_turned_left = 0;
-int has_turned_right = 0;
-int has_gone_straight = 0;
 int to_turn_left = 0;
 int to_turn_right = 0;
 
@@ -93,6 +89,7 @@ int timer_to_start = 0;
 int turn_array[555];
 int turn_max = 555;
 int i = 0; //turn array index
+int light_counter = 0;
 //* ========================================
 // function definitions
 void maze_mode_1();
@@ -136,10 +133,7 @@ int main() {
     USBUART_Start(0,USBUART_5V_OPERATION);  
     RF_BT_SELECT_Write(0);
     
-// ------MOTOR SETUP --------------     
-    //CONTROL_Write(0b00000011);                                                                  // disable motor    
-    //CyDelay(2000);
-    
+// ------MOTOR SETUP --------------       
     CONTROL_Write(0b00000000);                                                                  // enable motor
     Clock_PWM_Start();                                                                          // Start clock for PWM
     PWM_1_Start();
@@ -161,85 +155,208 @@ int main() {
         usb_output = 1;
     }
     
-    /*
-    int16_t retsteps[555] = { -1 }; //retsteps is the array of steps to reach the target
-	int16_t numberOfSteps = astar(1, 13, 5, 5, retsteps);
-    */
-    
-    int16_t retsteps[555] ; //retsteps is the array of steps needed to traverse the map
-	int16_t numberOfSteps = dfs(17,13, retsteps);
-    
     for (i=0;i<turn_max;i++) {
         turn_array[i] = -1;
+    }
+    i = 0;    
+    
+    int16_t retsteps[555]= {-1}; //retsteps is the array of steps needed to traverse the map
+    for (i=0;i<555;i++) {
+        retsteps[i] = -1;
+    }
+    i = 0;
+    
+    int16_t totalsteps[1000]; //retsteps is the array of steps needed to traverse the map
+    for (i=0;i<1000;i++) {
+        totalsteps[i] = -1;
     }
     i = 0;
     
     int x1, y1, x2, y2, x3, y3 = 0;
     int j = 0;
-    while (retsteps[i+2] != -1) {    
-        x1 = retsteps[i] % 19;
-        y1 = retsteps[i] / 19;
-        x2 = retsteps[i+1] % 19;
-        y2 = retsteps[i+1] / 19;
-        x3 = retsteps[i+2] % 19;
-        y3 = retsteps[i+2] / 19;
+    int l,a;
+    int m = 0;
+    check_mode();
+    if (mode == 0) {
+	    int16_t numberOfSteps = dfs(1,1, totalsteps);
+        while (totalsteps[i+2] != -1) {    
+            x1 = totalsteps[i] % 19;
+            y1 = totalsteps[i] / 19;
+            x2 = totalsteps[i+1] % 19;
+            y2 = totalsteps[i+1] / 19;
+            x3 = totalsteps[i+2] % 19;
+            y3 = totalsteps[i+2] / 19;
 
-        if ((x1 == x2) && (x2 == x3)) {
-            if ((y1 == y3) && (y2 != y3)) {
-                turn_array[j] = 3;
-                j++;  
-            } else {
-                if ((map[y2][x2+1] == 0) || (map[y2][x2-1] == 0)) {
-                    turn_array[j] = 0;
+            if ((x1 == x2) && (x2 == x3)) {
+                if ((y1 == y3) && (y2 != y3)) {
+                    turn_array[j] = 3;
+                    j++;  
+                } else {
+                    if ((map[y2][x2+1] == 0) || (map[y2][x2-1] == 0)) {
+                        turn_array[j] = 0;
+                        j++;
+                    }
+                }
+            } else if ((y1 == y2) && (y2 == y3)) {
+                if ((x1 == x3) && (x2 != x3)) {
+                    turn_array[j] = 3;
+                    j++;      
+                } else {
+                    if ((map[y2+1][x2] == 0) || (map[y2-1][x2] == 0)) {
+                        turn_array[j] = 0;
+                        j++;
+                    }   
+                }
+            } else if ((x1 == x2) && (x2 == x3 + 1)) {
+                if (y1 == y2 + 1) {
+                    turn_array[j] = 1;
+                    j++;  
+                } else if (y1 == y2 - 1) {
+                    turn_array[j] = 2;
                     j++;
                 }
-            }
-        } else if ((y1 == y2) && (y2 == y3)) {
-            if ((x1 == x3) && (x2 != x3)) {
-                turn_array[j] = 3;
-                j++;      
-            } else {
-                if ((map[y2+1][x2] == 0) || (map[y2-1][x2] == 0)) {
-                    turn_array[j] = 0;
+            } else if ((x1 == x2) && (x2 == x3 - 1)) {
+                if (y1 == y2 + 1) {
+                    turn_array[j] = 2;
+                    j++;
+                } else if (y1 == y2 - 1) {
+                    turn_array[j] = 1;
                     j++;
                 }   
+            } else if ((x2 == x3) && (x1 == x2 - 1)) {
+                if (y2 == y3 + 1) {
+                    turn_array[j] = 1;
+                    j++;  
+                } else if (y2 == y3 - 1) {
+                    turn_array[j] = 2;
+                    j++;
+                }
+            } else if ((x2 == x3) && (x1 == x2 + 1)) {
+                if (y2 == y3 + 1) {
+                    turn_array[j] = 2;
+                    j++;
+                } else if (y2 == y3 - 1) {
+                    turn_array[j] = 1;
+                    j++;
+                }   
+            }       
+            i++;
+        } 
+    } else if (mode == 1) {
+        int k = 0;
+        int startx = 1;
+        int starty = 1;
+        for (k=0;k<5;k++) {
+            int16_t numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
+            startx = food_list[k][0];
+            starty = food_list[k][1];
+            /*
+            l = 0;
+            while (retsteps[l] != -1) {
+                totalsteps[l+m] = retsteps[l];
+                l++;
+            }         
+            m += l;
+            m -= 1;
+            */
+            /*
+            for (a=0;a<numberOfSteps;a++) {
+                x1 = retsteps[i] % 19;
+                y1 = retsteps[i] / 19; 
+                x2 = retsteps[i+1] % 19;
+                y2 = retsteps[i+1] / 19;
+                if (((x1 = x2 + 1) && (y1 = y2 - 1)) || ((x2 = x1 + 1) && (y2 = y1 - 1))){
+                     if (map[x1][y2] == 1) {
+                        for (l = numberOfSteps - 1; l >= a-1; l--) {
+                            retsteps[l+1] = retsteps[l];
+                        }
+                        retsteps[a-1] = y1 * WIDTH + x2;
+                     } else {
+                        for (l = numberOfSteps - 1; l >= a-1; l--) {
+                            retsteps[l+1] = retsteps[l];
+                        }
+                        retsteps[a-1] = x1 * WIDTH + y2;
+                     }
+                }
             }
-        } else if ((x1 == x2) && (x2 == x3 + 1)) {
-            if (y1 == y2 + 1) {
-                turn_array[j] = 1;
-                j++;  
-            } else if (y1 == y2 - 1) {
-                turn_array[j] = 2;
-                j++;
-            }
-        } else if ((x1 == x2) && (x2 == x3 - 1)) {
-            if (y1 == y2 + 1) {
-                turn_array[j] = 2;
-                j++;
-            } else if (y1 == y2 - 1) {
-                turn_array[j] = 1;
-                j++;
+            */
+            
+            for(a = 0; a < numberOfSteps; a++){
+                totalsteps[m] = retsteps[a];
+                m++;
             }   
-        } else if ((x2 == x3) && (x1 == x2 - 1)) {
-            if (y2 == y3 + 1) {
-                turn_array[j] = 1;
-                j++;  
-            } else if (y2 == y3 - 1) {
-                turn_array[j] = 2;
-                j++;
+            m -=1;
+            
+            for (l=0;l<555;l++) {
+                retsteps[i] = -1;
             }
-        } else if ((x2 == x3) && (x1 == x2 + 1)) {
-            if (y2 == y3 + 1) {
-                turn_array[j] = 2;
-                j++;
-            } else if (y2 == y3 - 1) {
-                turn_array[j] = 1;
-                j++;
-            }   
-        }       
-        i++;
+        } 
+        while (totalsteps[i+2] != -1) {    
+            x1 = totalsteps[i] % 19;
+            y1 = totalsteps[i] / 19;
+            x2 = totalsteps[i+1] % 19;
+            y2 = totalsteps[i+1] / 19;
+            x3 = totalsteps[i+2] % 19;
+            y3 = totalsteps[i+2] / 19;
+
+            if ((x1 == x2) && (x2 == x3)) {
+                if ((y1 == y3) && (y2 != y3)) {
+                    turn_array[j] = 3;
+                    j++;  
+                } else {
+                    if ((map[y2][x2+1] == 0) || (map[y2][x2-1] == 0)) {
+                        turn_array[j] = 0;
+                        j++;
+                    }
+                }
+            } else if ((y1 == y2) && (y2 == y3)) {
+                if ((x1 == x3) && (x2 != x3)) {
+                    turn_array[j] = 3;
+                    j++;      
+                } else {
+                    if ((map[y2+1][x2] == 0) || (map[y2-1][x2] == 0)) {
+                        turn_array[j] = 0;
+                        j++;
+                    }   
+                }
+            } else if ((x1 == x2) && (x2 == x3 + 1)) {
+                if (y1 == y2 + 1) {
+                    turn_array[j] = 1;
+                    j++;  
+                } else if (y1 == y2 - 1) {
+                    turn_array[j] = 2;
+                    j++;
+                }
+            } else if ((x1 == x2) && (x2 == x3 - 1)) {
+                if (y1 == y2 + 1) {
+                    turn_array[j] = 2;
+                    j++;
+                } else if (y1 == y2 - 1) {
+                    turn_array[j] = 1;
+                    j++;
+                }   
+            } else if ((x2 == x3) && (x1 == x2 - 1)) {
+                if (y2 == y3 + 1) {
+                    turn_array[j] = 1;
+                    j++;  
+                } else if (y2 == y3 - 1) {
+                    turn_array[j] = 2;
+                    j++;
+                }
+            } else if ((x2 == x3) && (x1 == x2 + 1)) {
+                if (y2 == y3 + 1) {
+                    turn_array[j] = 2;
+                    j++;
+                } else if (y2 == y3 - 1) {
+                    turn_array[j] = 1;
+                    j++;
+                }   
+            }       
+            i++;
+        } 
     }
-    i=0;
+    i=-20; 
+    CyDelay(5000);
     
     while(1) { 
         //set_speeds();
@@ -257,45 +374,39 @@ int main() {
                 }
             }
         }
-        */  
-        /*    
-        if (retsteps[i] != -1) {
-            x1 = retsteps[i] % 19;
-            y1 = retsteps[i] / 19;
-
-            itoa(x1, line, 10);
-            itoa(y1, test, 10);
-            usb_put_string(line);
-            usb_put_string(":");
-            usb_put_string(test);
-            usb_put_string("\n\r");  
-            i++;
-        }
         */
-        
-        // update each sensor values of max_value, ADC_value and is_under_line
-        int m;   
-        for (m = 1; m < 7; m++){
-            sensor_is_under_line(m);
+
+        if (totalsteps[i] != -1) {
+            if (i>-1) {
+                x1 = totalsteps[i] % 19;
+                y1 = totalsteps[i] / 19;
+
+                itoa(x1, line, 10);
+                itoa(y1, test, 10);
+                usb_put_string(line);
+                usb_put_string(":");
+                usb_put_string(test);
+                usb_put_string("\n\r");  
+            }
+            i++;  
         }
+
+        // update each sensor values of max_value, ADC_value and is_under_line
+        next_turn = turn_array[i];
+        
+        sensor_is_under_line(6);
+        sensor_is_under_line(4);
+        sensor_is_under_line(1);
+        sensor_is_under_line(2);
+        sensor_is_under_line(3);
+        sensor_is_under_line(5);
+        
+        maze_mode_1(); 
 
         if ((is_under_line[1] == 1)  && (is_under_line[2] != 1)) {
             last_on_line = 1;
         } else if ((is_under_line[1] != 1)  && (is_under_line[2] == 1)) {
             last_on_line = 2;
-        }
-        
-        check_mode();
-        next_turn = turn_array[i];
-        if (mode == 0) {
-            maze_mode_1(); 
-        } else if (mode == 1) {
-            turns_mode();   
-        } else if (mode == 2) {
-            curves_mode();
-        } else if (mode == 3) {
-            PWM_1_WriteCompare(127);
-            PWM_2_WriteCompare(127);
         }
         /*
         int complete_structure = handle_radio_data(); 
@@ -334,12 +445,10 @@ int main() {
 
 //* ========================================
 void maze_mode_1() { // 7.7V
-    if (state == 0) { 
-        maze_straight();
-        
+    if (state == 0) {        
         if (next_turn == 1) { //turn left, only check sensor 3
             if ((is_under_line[3] == 1 && is_under_line[4] == 1) || (is_under_line[3] == 1 && is_under_line[6] == 1)) {
-                if ((has_turned_left == 1) || (has_turned_right == 1) || (has_gone_straight == 1)) {
+                if (has_turned == 1) {
                     
                 } else {
                     PWM_1_WriteCompare(127);
@@ -347,10 +456,19 @@ void maze_mode_1() { // 7.7V
                     state = 1;   
                 }
             }
-        }
-        else if (next_turn == 2) {
+        } else if (next_turn == 2) {
             if ((is_under_line[5] == 1 && is_under_line[4] == 1) || (is_under_line[5] == 1 && is_under_line[6] == 1)) {
-                if ((has_turned_left == 1) || (has_turned_right == 1) || (has_gone_straight == 1)) {
+                if (has_turned == 1) {
+                    
+                } else {
+                    PWM_1_WriteCompare(127);
+                    PWM_2_WriteCompare(127);
+                    state = 1;   
+                }            
+            }
+        } else if ((next_turn == 3) || (next_turn == 0)) {
+            if (((is_under_line[5] == 1 && is_under_line[4] == 1) || (is_under_line[5] == 1 && is_under_line[6] == 1)) || ((is_under_line[3] == 1 && is_under_line[4] == 1) || (is_under_line[3] == 1 && is_under_line[6] == 1))) {
+                if (has_turned == 1) {
                     
                 } else {
                     PWM_1_WriteCompare(127);
@@ -359,7 +477,7 @@ void maze_mode_1() { // 7.7V
                 }            
             }
         }
-        
+
         /*
         if (is_under_line[3] || is_under_line[5]) {
             if ((has_turned_left == 1) || (has_turned_right == 1) || (has_gone_straight == 1)) {
@@ -378,11 +496,19 @@ void maze_mode_1() { // 7.7V
             state = 3;  
         }
         
+        maze_straight();
+        
+        if ((is_under_line[3] == 1) && (is_under_line[5] == 1)) {
+            light_counter++;
+            if (light_counter > 5) {
+                light_counter = 0;
+                has_turned = 0;
+            }
+        }
+        
     } else if (state == 1) {
         PWM_1_WriteCompare(180);
         PWM_2_WriteCompare(175);
-        sensor_is_under_line(3);
-        sensor_is_under_line(5);
         if (is_under_line[3] || is_under_line[5]) {
             if (is_under_line[3] == 1) {
                 to_turn_left = 1;
@@ -396,12 +522,11 @@ void maze_mode_1() { // 7.7V
     } else if (state == 2) {
         if (next_turn == 0) {
             maze_straight();
-            has_gone_straight = 1;
+            has_turned = 1;
             i++;
             if (i > turn_max) {
                 i = 0;
             }
-            Timer_TS_WritePeriod(40);
             Timer_TS_Start();
             state = 0;
         } else if (next_turn == 1) { // Left turn
@@ -409,12 +534,11 @@ void maze_mode_1() { // 7.7V
                 if (has_been_in_light == 1) {
                     has_been_in_light = 0;
                     state = 0;
-                    has_turned_left = 1;
+                    has_turned = 1;
                     i++;
                     if (i > turn_max) {
                         i = 0;
                     }
-                    Timer_TS_WritePeriod(150);
                     Timer_TS_Start();
                 } else {
                     turn_left();
@@ -428,12 +552,11 @@ void maze_mode_1() { // 7.7V
                 if (has_been_in_light == 1) {
                     has_been_in_light = 0;
                     state = 0;
-                    has_turned_right = 1;
+                    has_turned = 1;
                     i++;
                     if (i > turn_max) {
                         i = 0;
                     }
-                    Timer_TS_WritePeriod(150);
                     Timer_TS_Start();
                 } else {
                     turn_right();
@@ -456,12 +579,11 @@ void maze_mode_1() { // 7.7V
                     
                     has_been_in_light = 0;
                     state = 0;
-                    has_turned_right = 1;
+                    has_turned = 1;
                     i++;
                     if (i > turn_max) {
                         i = 0;
                     }
-                    Timer_TS_WritePeriod(150);
                     Timer_TS_Start();
                 } else {
                     if (to_turn_left == 1) {
@@ -489,10 +611,8 @@ void maze_mode_1() { // 7.7V
         if (is_under_line[1] == 1 || is_under_line[2] == 1) {
             state = 0;
         } else {
-            sensor_is_under_line(3);
-            sensor_is_under_line(5);
             if (is_under_line[3] || is_under_line[5]) {
-                if ((has_turned_left == 1) || (has_turned_right == 1) || (has_gone_straight == 1)) {
+                if (has_turned == 1) {
                     
                 } else {
                     PWM_1_WriteCompare(127);
