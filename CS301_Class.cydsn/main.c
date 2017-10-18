@@ -91,6 +91,7 @@ int turn_max = 555;
 int i = 0; //turn array index
 int ab = 0;
 int light_counter = 0;
+int u_turn_type = 0;
 //* ========================================
 // function definitions
 void maze_mode_1();
@@ -247,42 +248,12 @@ int main() {
         int k = 0;
         int startx = 1;
         int starty = 1;
-        for (k=1;k<2;k++) {
-            //int16_t numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
-            int16_t numberOfSteps = astar(4, 5, 3, 13, retsteps);
+        for (k=0;k<5;k++) {
+            int16_t numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
+            //int16_t numberOfSteps = astar(4, 5, 3, 13, retsteps);
             startx = food_list[k][0];
             starty = food_list[k][1];
-            /*
-            l = 0;
-            while (retsteps[l] != -1) {
-                totalsteps[l+m] = retsteps[l];
-                l++;
-            }         
-            m += l;
-            m -= 1;
-            */
-            /*
-            for (a=0;a<numberOfSteps;a++) {
-                x1 = retsteps[i] % 19;
-                y1 = retsteps[i] / 19; 
-                x2 = retsteps[i+1] % 19;
-                y2 = retsteps[i+1] / 19;
-                if (((x1 = x2 + 1) && (y1 = y2 - 1)) || ((x2 = x1 + 1) && (y2 = y1 - 1))){
-                     if (map[x1][y2] == 1) {
-                        for (l = numberOfSteps - 1; l >= a-1; l--) {
-                            retsteps[l+1] = retsteps[l];
-                        }
-                        retsteps[a-1] = y1 * WIDTH + x2;
-                     } else {
-                        for (l = numberOfSteps - 1; l >= a-1; l--) {
-                            retsteps[l+1] = retsteps[l];
-                        }
-                        retsteps[a-1] = x1 * WIDTH + y2;
-                     }
-                }
-            }
-            */
-            
+
             for(a = 0; a < numberOfSteps; a++){
                 totalsteps[m] = retsteps[a];
                 m++;
@@ -357,27 +328,27 @@ int main() {
             i++;
         } 
     }
-    ab=-20; 
-    CyDelay(5000);
+    ab=0; 
+    
+    CyDelay(3000);
     
     while(1) { 
         //set_speeds();
         /*
-        if (usb_output == 1) {
-            if (turn_array[i] != -1) {
-                if (i>-1) {
-                    itoa(turn_array[i], line, 10);
-                    usb_put_string(line);
-                    usb_put_string("\n\r");
-                    i++;
-                }
-                if (i>turn_max) {
-                    i = 0;
-                }
+        if (turn_array[ab] != -1) {
+            if (ab>-1) {
+                itoa(turn_array[ab], line, 10);
+                usb_put_string(line);
+                usb_put_string("\n\r");
+                
+            }
+            ab++;
+            if (ab>turn_max) {
+                ab = 0;
             }
         }
         */
-
+        /*
         if (totalsteps[ab] != -1) {
             if (ab>-1) {
                 x1 = totalsteps[ab] % 19;
@@ -392,7 +363,7 @@ int main() {
             }
             ab++;  
         }
-
+          */ 
         // update each sensor values of max_value, ADC_value and is_under_line
         next_turn = turn_array[ab];
         
@@ -455,7 +426,8 @@ void maze_mode_1() { // 7.7V
                 } else {
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
-                    state = 1;   
+                    state = 1;  
+                    return;
                 }
             }
         } else if (next_turn == 2) {
@@ -465,7 +437,8 @@ void maze_mode_1() { // 7.7V
                 } else {
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
-                    state = 1;   
+                    state = 1; 
+                    return;
                 }            
             }
         } else if ((next_turn == 3) || (next_turn == 0)) {
@@ -476,6 +449,7 @@ void maze_mode_1() { // 7.7V
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
                     state = 1;   
+                    return;
                 }            
             }
         }
@@ -493,16 +467,23 @@ void maze_mode_1() { // 7.7V
         */
         
         if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {
-            PWM_1_WriteCompare(127);
-            PWM_2_WriteCompare(127);
-            state = 3;  
+            if ((next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) {
+                next_turn = 2;
+                state = 2;
+                return;
+            } else {
+                PWM_1_WriteCompare(127);
+                PWM_2_WriteCompare(127);
+                state = 3;  
+                return;
+            }
         }
         
         maze_straight();
         
-        if ((is_under_line[3] == 1) && (is_under_line[5] == 1)) {
+        if ((is_under_line[3] == 0) && (is_under_line[5] == 0)) {
             light_counter++;
-            if (light_counter > 5) {
+            if (light_counter > 10) {
                 light_counter = 0;
                 has_turned = 0;
             }
@@ -519,15 +500,15 @@ void maze_mode_1() { // 7.7V
             }
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
-            state = 2;
+            state = 2;            
         }
     } else if (state == 2) {
         if (next_turn == 0) {
             maze_straight();
             has_turned = 1;
-            i++;
-            if (i > turn_max) {
-                i = 0;
+            ab++;
+            if (ab > turn_max) {
+                ab = 0;
             }
             Timer_TS_Start();
             state = 0;
@@ -537,9 +518,9 @@ void maze_mode_1() { // 7.7V
                     has_been_in_light = 0;
                     state = 0;
                     has_turned = 1;
-                    i++;
-                    if (i > turn_max) {
-                        i = 0;
+                    ab++;
+                    if (ab > turn_max) {
+                        ab = 0;
                     }
                     Timer_TS_Start();
                 } else {
@@ -555,9 +536,9 @@ void maze_mode_1() { // 7.7V
                     has_been_in_light = 0;
                     state = 0;
                     has_turned = 1;
-                    i++;
-                    if (i > turn_max) {
-                        i = 0;
+                    ab++;
+                    if (ab > turn_max) {
+                        ab = 0;
                     }
                     Timer_TS_Start();
                 } else {
@@ -572,19 +553,19 @@ void maze_mode_1() { // 7.7V
                 if (has_been_in_light == 1) {
                     if (to_turn_left == 1) {
                         turn_left();
-                    }
-                    else if (to_turn_right == 1) {
+                    } else if (to_turn_right == 1) {
                         turn_right();
                     }
                     has_been_in_light = 2;
                 } else if (has_been_in_light == 3) {
-                    
                     has_been_in_light = 0;
                     state = 0;
                     has_turned = 1;
-                    i++;
-                    if (i > turn_max) {
-                        i = 0;
+                    to_turn_left = 0;
+                    to_turn_right = 0;
+                    ab++;
+                    if (ab > turn_max) {
+                        ab = 0;
                     }
                     Timer_TS_Start();
                 } else {
@@ -595,11 +576,11 @@ void maze_mode_1() { // 7.7V
                     }
                 }
             } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {
-                    if (to_turn_left == 1) {
-                        turn_left();
-                    } else if (to_turn_right == 1) {
-                        turn_right();
-                    }
+                if (to_turn_left == 1) {
+                    turn_left();
+                } else if (to_turn_right == 1) {
+                    turn_right();
+                }
                 if (has_been_in_light == 2) {
                     has_been_in_light = 3;
                 } else if (has_been_in_light == 3) {
@@ -607,8 +588,8 @@ void maze_mode_1() { // 7.7V
                 } else {
                     has_been_in_light = 1;  
                 }
-            }
-        }        
+            }  
+        }
     } else if (state == 3) {
         if (is_under_line[1] == 1 || is_under_line[2] == 1) {
             state = 0;
