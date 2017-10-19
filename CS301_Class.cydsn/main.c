@@ -53,33 +53,16 @@ int is_under_line[] = {0,0,0,0,0,0,0};                                          
 //* ========================================
 // initialising motor speed values
 int voltage = 0;
-float initial_speed = 127;
-int motor_1_default_speed = 127;
-int motor_2_default_speed = 127;
-int motor_1_speed = 127;
-int motor_2_speed = 127;
-
 int straightspeed1 = 75;
 int straightspeed2 = 71;
-
-int back_turn_speed = 52;                                                                       // for backwards turning wheel
-int forward_turn_speed = 37;                                                                    // for forwards turning wheel
-int motor_correction_speed = 25;                                                                // for correction
-int motor_backwards_speed = 170;                                                                // for reversing
 //* ========================================
 // flags for turns
-int turning_left = 0;
-int turning_right = 0;
-int is_reverse = 0;
-int is_turning_left = 0;
-int is_turning_right = 0;
 int has_turned = 0;
 int to_turn_left = 0;
 int to_turn_right = 0;
 
 int timer_initial = 0;
 int start_ypos = 0;
-int counter = 10;
 int state = 0;
 int next_turn = 0;
 int correcting_left = 0;
@@ -91,7 +74,6 @@ int turn_max = 555;
 int i = 0; //turn array index
 int ab = 0;
 int light_counter = 0;
-int u_turn_type = 0;
 //* ========================================
 // function definitions
 void maze_mode_1();
@@ -107,7 +89,6 @@ void turn_left_slow();
 void turn_right();
 void turn_right_slow();
 void calculate_distance_travelled();
-void set_speeds();
 void check_mode();
 //* ========================================
 int main() {
@@ -117,13 +98,6 @@ int main() {
     isr_TS_Start();
     isr_TS_Enable();    
     Timer_TS_SetInterruptMode(3);
-    /*
-    isr_TS_1_Start();
-    isr_TS_1_Enable();
-    Timer_TS_1_Start();
-    Timer_TS_1_Enable();
-    Timer_TS_1_SetInterruptMode(3);
-    */
     
 // ------USB SETUP ----------------    
     USBUART_Start(0,USBUART_5V_OPERATION);  
@@ -326,8 +300,7 @@ int main() {
     
     CyDelay(3000);
     
-    while(1) { 
-        //set_speeds();
+    while(1) {     
         /*
         if (turn_array[ab] != -1) {
             if (ab>-1) {
@@ -779,47 +752,6 @@ void calculate_distance_travelled(){
     motor_2_distance = motor_2_distance + fabs((float)(QuadDec_M2_GetCounter()*0.8887));        // *202.6327/4/3/19
     QuadDec_M1_SetCounter(0);                                                                   // reset counter after reading from it
     QuadDec_M2_SetCounter(0);
-}
-//* ========================================
-void set_speeds() {
-    // sets initial and turning speeds as functions of battery voltage
-    
-    voltage = get_battery_voltage();
-    if (voltage < 7300) {
-        initial_speed = 127;
-    } else {
-        initial_speed = (float)((float)((float)voltage / 160.0) + (float)(135.0 / 4.0));
-        if (voltage < 7700) {
-            motor_correction_speed = 26;
-        } else if (voltage < 8100) {
-            motor_correction_speed = 25;
-        } else {
-            motor_correction_speed = 24;
-        }
-        if (voltage < 7600) {
-            forward_turn_speed = 39;
-        } else if (voltage < 7900) {
-            forward_turn_speed = 38;
-        } else if (voltage < 8200) {
-            forward_turn_speed = 37;
-        } else {
-            forward_turn_speed = 36;
-        }
-        if (voltage < 7540) {
-            back_turn_speed = 55;
-        } else if (voltage < 7780) {
-            back_turn_speed = 54;
-        } else if (voltage < 8020) {
-            back_turn_speed = 53;
-        } else if (voltage < 8260) {
-            back_turn_speed = 52;
-        } else {
-            back_turn_speed = 51;
-        }
-    }
-    motor_1_default_speed = (int) initial_speed;
-    motor_2_default_speed = (int) initial_speed; 
-    motor_backwards_speed = (float)((float)((float)voltage / -150.0) + (float)(656.0 / 3.0));
 }
 //* ========================================
 void check_mode() {
