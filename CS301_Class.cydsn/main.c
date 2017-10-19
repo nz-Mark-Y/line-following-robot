@@ -96,7 +96,6 @@ int u_turn_type = 0;
 // function definitions
 void maze_mode_1();
 void maze_straight();
-void print_light_sensor_values();
 void sensor_is_under_line(int sensorNum);
 int get_battery_voltage();
 int handle_radio_data();
@@ -107,12 +106,7 @@ void turn_left();
 void turn_left_slow();
 void turn_right();
 void turn_right_slow();
-void go_straight();
-void handle_turns();
-void curves_mode();
-void turns_mode();
 void calculate_distance_travelled();
-void travel_straight();
 void set_speeds();
 void check_mode();
 //* ========================================
@@ -178,9 +172,10 @@ int main() {
     int j = 0;
     int l,a;
     int m = 0;
+    int16_t numberOfSteps = 0;
     check_mode();
     if (mode == 0) {
-	    int16_t numberOfSteps = dfs(1,1, totalsteps);
+	    numberOfSteps = dfs(1, 1, totalsteps);
         while (totalsteps[i+2] != -1) {    
             x1 = totalsteps[i] % 19;
             y1 = totalsteps[i] / 19;
@@ -249,8 +244,7 @@ int main() {
         int startx = 1;
         int starty = 1;
         for (k=0;k<5;k++) {
-            int16_t numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
-            //int16_t numberOfSteps = astar(4, 5, 3, 13, retsteps);
+            numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
             startx = food_list[k][0];
             starty = food_list[k][1];
 
@@ -261,7 +255,7 @@ int main() {
             m -=1;
             
             for (l=0;l<555;l++) {
-                retsteps[i] = -1;
+                retsteps[l] = -1;
             }
         } 
         while (totalsteps[i+2] != -1) {    
@@ -347,8 +341,7 @@ int main() {
                 ab = 0;
             }
         }
-        */
-        /*
+     
         if (totalsteps[ab] != -1) {
             if (ab>-1) {
                 x1 = totalsteps[ab] % 19;
@@ -389,33 +382,12 @@ int main() {
                 int16 xpos = system_state.robot_xpos;
                 int16 ypos = system_state.robot_ypos;
                 int16 orient = system_state.robot_orientation;     
-                   
-                itoa(strength, line, 10);
-                usb_put_string("RSSI: ");
-                usb_put_string(line);
-                usb_put_string("\n\r");
-            
-                itoa(xpos, line, 10);
-                usb_put_string("XPOS: ");
-                usb_put_string(line);
-                usb_put_string("\n\r");
-            
-                itoa(ypos, line, 10);
-                usb_put_string("YPOS: ");
-                usb_put_string(line);
-                usb_put_string("\n\r");
-            
-                itoa(orient, test, 10);
-                usb_put_string("Orientation: ");
-                usb_put_string(test);
-                usb_put_string("\n\r");  
             }
         }      
         calculate_distance_travelled();
          */
     }
 }
-
 //* ========================================
 void maze_mode_1() { // 7.7V
     if (state == 0) {        
@@ -452,22 +424,9 @@ void maze_mode_1() { // 7.7V
                     return;
                 }            
             }
-        }
-
-        /*
-        if (is_under_line[3] || is_under_line[5]) {
-            if ((has_turned_left == 1) || (has_turned_right == 1) || (has_gone_straight == 1)) {
-                
-            } else {
-                PWM_1_WriteCompare(127);
-                PWM_2_WriteCompare(127);
-                state = 1;   
-            }
-        }
-        */
-        
+        } 
         if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {
-            if ((next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) {
+            if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) {
                 next_turn = 2;
                 state = 2;
                 return;
@@ -495,8 +454,8 @@ void maze_mode_1() { // 7.7V
         if (is_under_line[3] || is_under_line[5]) {
             if (is_under_line[3] == 1) {
                 to_turn_left = 1;
-            } else if (is_under_line[5] == 1) {
-                to_turn_right = 1;
+            } else {
+                to_turn_left = 0;
             }
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
@@ -553,7 +512,7 @@ void maze_mode_1() { // 7.7V
                 if (has_been_in_light == 1) {
                     if (to_turn_left == 1) {
                         turn_left();
-                    } else if (to_turn_right == 1) {
+                    } else {
                         turn_right();
                     }
                     has_been_in_light = 2;
@@ -562,7 +521,6 @@ void maze_mode_1() { // 7.7V
                     state = 0;
                     has_turned = 1;
                     to_turn_left = 0;
-                    to_turn_right = 0;
                     ab++;
                     if (ab > turn_max) {
                         ab = 0;
@@ -571,14 +529,14 @@ void maze_mode_1() { // 7.7V
                 } else {
                     if (to_turn_left == 1) {
                         turn_left();
-                    } else if (to_turn_right == 1) {
+                    } else {
                         turn_right();
                     }
                 }
             } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {
                 if (to_turn_left == 1) {
                     turn_left();
-                } else if (to_turn_right == 1) {
+                } else {
                     turn_right();
                 }
                 if (has_been_in_light == 2) {
@@ -638,85 +596,6 @@ void maze_straight() {
         PWM_2_WriteCompare(straightspeed2 + 15);
         correcting_right = 1;
     }
-}
-//* ========================================
-void print_light_sensor_values() {
-    // prints out light sensor values 
-    
-    char sensor_string_1[BUF_SIZE], sensor_string_2[BUF_SIZE], sensor_string_3[BUF_SIZE], sensor_string_4[BUF_SIZE], sensor_string_5[BUF_SIZE], sensor_string_6[BUF_SIZE];
-    char line1[BUF_SIZE], line2[BUF_SIZE],  line3[BUF_SIZE],  line4[BUF_SIZE],  line5[BUF_SIZE],  line6[BUF_SIZE];
-    
-    //LS1
-    itoa((max_value[1]-min_value[1]), line1, 10);
-    itoa(1, sensor_string_1, 10); 
-    usb_put_string("Light Sensor ");
-    usb_put_string(sensor_string_1);
-    usb_put_string(" : ");
-    usb_put_string(line1);
-    if(is_under_line[1]){
-        usb_put_string(" , is under the line.");
-    }
-    usb_put_string("\n\r");
-        
-    //LS2
-    itoa((max_value[2]-min_value[2]), line2, 10);
-    itoa(2, sensor_string_2, 10); 
-    usb_put_string("Light Sensor ");
-    usb_put_string(sensor_string_2);
-    usb_put_string(" : ");
-    usb_put_string(line2);
-    if(is_under_line[2]){
-        usb_put_string(" , is under the line.");
-    }
-    usb_put_string("\n\r");
-        
-    //LS3
-    itoa((max_value[3]-min_value[3]), line3, 10);
-    itoa(3, sensor_string_3, 10); 
-    usb_put_string("Light Sensor ");
-    usb_put_string(sensor_string_3);
-    usb_put_string(" : ");
-    usb_put_string(line3);
-    if(is_under_line[3]){
-        usb_put_string(" , is under the line.");
-    }
-    usb_put_string("\n\r");
-        
-    //LS4
-    itoa((max_value[4]-min_value[4]), line4, 10);
-    itoa(4, sensor_string_4, 10); 
-    usb_put_string("Light Sensor ");
-    usb_put_string(sensor_string_4);
-    usb_put_string(" : ");
-    usb_put_string(line4);
-    if(is_under_line[4]){
-        usb_put_string(" , is under the line.");
-    }
-    usb_put_string("\n\r");
-        
-    //LS5
-    itoa((max_value[5]-min_value[5]), line5, 10);
-    itoa(5, sensor_string_5, 10); 
-    usb_put_string("Light Sensor ");
-    usb_put_string(sensor_string_5);
-    usb_put_string(" : ");
-    usb_put_string(line5);
-    if(is_under_line[5]){
-        usb_put_string(" , is under the line.");
-    }
-    usb_put_string("\n\r");
-        
-    //LS6
-    itoa((max_value[6]-min_value[6]), line6, 10);
-    itoa(6, sensor_string_6, 10); 
-    usb_put_string("Light Sensor ");
-    usb_put_string(sensor_string_6);
-    usb_put_string(" : ");
-    usb_put_string(line6);
-    if(is_under_line[6]){
-        usb_put_string(" , is under the line.");
-    }
-    usb_put_string("\n\r");
 }
 //* ========================================
 void sensor_is_under_line(int sensorNum) {
@@ -894,174 +773,12 @@ void turn_right_slow() {
     PWM_2_WriteCompare(127 + 35);                                              // move motor 2 backward 
 }
 //* ========================================
-void go_straight() {
-    // function to make the robot go straight
-    // change to default speed for both motors
-    
-    motor_1_speed = motor_1_default_speed;
-    motor_2_speed = motor_2_default_speed;
-    PWM_1_WriteCompare(motor_1_default_speed);
-    PWM_2_WriteCompare(motor_2_default_speed);
-}
-//* ========================================
-void turns_mode() { 
-    // function to handle turns mode
-    if (turning_left == 1) {
-        if (is_under_line[1] == 1 || is_under_line[2] == 1) {
-            has_turned = 1;
-            Timer_TS_Start();
-            Timer_TS_Enable();
-            turning_left = 0;
-            motor_1_speed = motor_1_default_speed;
-            motor_2_speed = motor_2_default_speed + motor_correction_speed;
-            PWM_1_WriteCompare(motor_1_speed);
-            PWM_2_WriteCompare(motor_2_speed);
-        } else {   
-            turn_left();
-        }
-    }
-    else if (turning_right == 1) {
-        if (is_under_line[1] == 1 || is_under_line[2] == 1) {
-            has_turned = 1;
-            Timer_TS_Start();
-            Timer_TS_Enable();
-            turning_right = 0;
-            motor_1_speed = motor_1_default_speed + motor_correction_speed;
-            motor_2_speed = motor_2_default_speed;       
-            PWM_1_WriteCompare(motor_1_speed);
-            PWM_2_WriteCompare(motor_2_speed);
-        } else {   
-            turn_right();
-        }
-    }
-
-    // keep robot on straight line
-    if (is_under_line[1] == 1 && is_under_line[2] == 1) {
-        turning_left = 0;
-        turning_right = 0;
-        go_straight();
-    }
-    else if (is_under_line[1] == 1 && is_under_line[2] == 0) {
-        motor_1_speed = motor_1_default_speed + motor_correction_speed;
-        motor_2_speed = motor_2_default_speed;       
-        PWM_1_WriteCompare(motor_1_speed);
-        PWM_2_WriteCompare(motor_2_speed);
-    }
-    else if (is_under_line[1] == 0 && is_under_line[2] == 1) {
-        motor_1_speed = motor_1_default_speed;
-        motor_2_speed = motor_2_default_speed + motor_correction_speed;
-        PWM_1_WriteCompare(motor_1_speed);
-        PWM_2_WriteCompare(motor_2_speed);
-    }
-    
-    // handle 90 degree turns
-    //CASE 3
-    if (is_under_line[1] == 0 && is_under_line[2] == 0 && is_under_line[3] == 1) {
-        if (has_turned == 1) {
-            motor_1_speed = motor_backwards_speed;                                              // slow reverse
-            motor_2_speed = motor_backwards_speed;                                              // slow reverse
-            PWM_1_WriteCompare(motor_1_speed);
-            PWM_2_WriteCompare(motor_2_speed);       
-        }
-        turning_left = 1;    
-    } 
-    //CASE 4
-    else if (is_under_line[1] == 0 && is_under_line[2] == 0 && is_under_line[5] == 1) {
-        if (has_turned == 1) {
-            motor_1_speed = motor_backwards_speed;                                              // slow reverse
-            motor_2_speed = motor_backwards_speed;                                              // slow reverse
-            PWM_1_WriteCompare(motor_1_speed);
-            PWM_2_WriteCompare(motor_2_speed);       
-        }        
-        turning_right = 1;
-    }
-}
-//* ========================================
-void curves_mode() {  
-    // function to handle curves mode
- 
-    //CASE 7
-    if (is_under_line[1] == 1 && is_under_line[2] == 1) {                                       // both sensors are on the line
-        turning_left = 0;
-        turning_right = 0;
-        go_straight();                                                                          // move forward as per usual
-    }
-    //CASE 10
-    else if (is_under_line[1] == 1 && is_under_line[2] == 0) {                                  // sensor 1 is on the line, sensor 2 is off the line    
-        motor_1_speed = motor_1_default_speed + motor_correction_speed;                         // decrease motor1 speed
-        motor_2_speed = motor_2_default_speed;                                                  // increase motor2 speed        
-        PWM_1_WriteCompare(motor_1_speed);
-        PWM_2_WriteCompare(motor_2_speed);
-    }
-    //CASE 9
-    else if (is_under_line[1] == 0 && is_under_line[2] == 1) {                                  // sensor 1 is off the line, sensor 2 is on the line
-        motor_1_speed = motor_1_default_speed;                                                  // increase motor1 speed
-        motor_2_speed = motor_2_default_speed + motor_correction_speed;                         // decrease motor2 speed
-        PWM_1_WriteCompare(motor_1_speed);
-        PWM_2_WriteCompare(motor_2_speed);
-    }
-    //CASE 8
-    else if (is_under_line[1] == 0 && is_under_line[2] == 0) {                                  // both front sensors off the line
-        motor_1_speed = motor_backwards_speed;                                                  // slow reverse
-        motor_2_speed = motor_backwards_speed;                                                  // slow reverse
-        PWM_1_WriteCompare(motor_1_speed);
-        PWM_2_WriteCompare(motor_2_speed);
-    }
-}
-//* ========================================
 void calculate_distance_travelled(){
     // uses quadrature reading to determine the distance travelled by robot's two wheels
     motor_1_distance = motor_1_distance + fabs((float)(QuadDec_M1_GetCounter()*0.8887));        //append distance value to global distance variable
     motor_2_distance = motor_2_distance + fabs((float)(QuadDec_M2_GetCounter()*0.8887));        // *202.6327/4/3/19
     QuadDec_M1_SetCounter(0);                                                                   // reset counter after reading from it
     QuadDec_M2_SetCounter(0);
-}
-//* ========================================
-void travel_straight() {
-    // code for benchmark test 5
-    int small_correction = 1;
-    if (counter % 10 == 0 && counter < 31) {
-        straightspeed2 = straightspeed2 + small_correction;
-    }
-    if (counter % 5 == 0 && counter > 31 && counter < 46) {
-        straightspeed2 = straightspeed2 - small_correction;
-    }
-    if (current_speed != 0) {
-        if (current_speed < target_speed) {
-            straightspeed1 = straightspeed1 - correction;
-            straightspeed2 = straightspeed2 - correction;
-        } else if (current_speed > target_speed) {
-            straightspeed1 = straightspeed1 + correction;
-            straightspeed2 = straightspeed2 + correction;
-        } 
-        correction = correction / 2;
-        if (correction < 1) {
-            correction = 1;
-        }
-    }
-    counter = counter + 1;
-    
-    if (mode_switch1_Read() == 1) {
-        if (counter == 1) {
-            start_ypos = system_state.robot_ypos;
-        } else {
-            if ((target_distance - 20) <= system_state.robot_ypos - start_ypos) {
-                PWM_1_WriteCompare(127);                                                                // stop
-                PWM_2_WriteCompare(127);  
-            } else {
-                PWM_1_WriteCompare(straightspeed1);                                                                
-                PWM_2_WriteCompare(straightspeed2);
-            }
-        }
-    } else {
-        if ((target_distance - 20) <= average_distance) {
-            PWM_1_WriteCompare(127);                                                                    // stop
-            PWM_2_WriteCompare(127);  
-        } else {
-            PWM_1_WriteCompare(straightspeed1);                                                                
-            PWM_2_WriteCompare(straightspeed2);
-        }
-    }
 }
 //* ========================================
 void set_speeds() {
