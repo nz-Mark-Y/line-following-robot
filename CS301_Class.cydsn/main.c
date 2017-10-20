@@ -7,7 +7,7 @@
  * UNPUBLISHED, LICENSED SOFTWARE.
  *
  * CONFIDENTIAL AND PROPRIETARY INFORMATION
- * WHICH IS THE PROPERTY OF Univ of Auckland.
+ * WHICH IS THE PROPERTY OF University of Auckland.
  *
  * ========================================
 */
@@ -60,18 +60,16 @@ int straightspeed2 = 71;
 int has_turned = 0;
 int to_turn_left = 0;
 int to_turn_right = 0;
+int dead_end = 0;
 
-int timer_initial = 0;
-int start_ypos = 0;
 int state = 0;
 int next_turn = 0;
 int correcting_left = 0;
 int correcting_right = 0;
 int has_been_in_light = 0;
-int timer_to_start = 0;
 int turn_array[555];
 int turn_max = 555;
-int i = 0; //turn array index
+int i = 0; // turn array index
 int ab = 0;
 int light_counter = 0;
 //* ========================================
@@ -147,9 +145,12 @@ int main() {
     int l,a;
     int m = 0;
     int16_t numberOfSteps = 0;
+    int16_t numberOfStepsdfs = 0;
     check_mode();
     if (mode == 0) {
-	    numberOfSteps = dfs(1, 1, totalsteps);
+	    numberOfStepsdfs = dfs(1, 1, totalsteps);
+        numberOfStepsdfs = numberOfStepsdfs + 1;
+        
         while (totalsteps[i+2] != -1) {    
             x1 = totalsteps[i] % 19;
             y1 = totalsteps[i] / 19;
@@ -331,7 +332,9 @@ int main() {
         }
           */ 
         // update each sensor values of max_value, ADC_value and is_under_line
-        next_turn = turn_array[ab];
+        if (dead_end != 1) {
+            next_turn = turn_array[ab];
+        } 
         
         sensor_is_under_line(6);
         sensor_is_under_line(4);
@@ -347,6 +350,7 @@ int main() {
         } else if ((is_under_line[1] != 1)  && (is_under_line[2] == 1)) {
             last_on_line = 2;
         }
+           
         /*
         int complete_structure = handle_radio_data(); 
         if (usb_output == 1) {
@@ -362,7 +366,7 @@ int main() {
     }
 }
 //* ========================================
-void maze_mode_1() { // 7.7V
+void maze_mode_1() { // 7.8V
     if (state == 0) {        
         if (next_turn == 1) { //turn left, only check sensor 3
             if ((is_under_line[3] == 1 && is_under_line[4] == 1) || (is_under_line[3] == 1 && is_under_line[6] == 1)) {
@@ -401,6 +405,7 @@ void maze_mode_1() { // 7.7V
         if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {
             if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) {
                 next_turn = 2;
+                dead_end = 1;
                 state = 2;
                 return;
             } else {
@@ -415,13 +420,17 @@ void maze_mode_1() { // 7.7V
         
         if ((is_under_line[3] == 0) && (is_under_line[5] == 0)) {
             light_counter++;
-            if (light_counter > 10) {
+            if (light_counter > 5) {
                 light_counter = 0;
                 has_turned = 0;
             }
         }
         
     } else if (state == 1) {
+        if (has_turned == 1) {
+            state = 0;
+            return;
+        }
         PWM_1_WriteCompare(180);
         PWM_2_WriteCompare(175);
         if (is_under_line[3] || is_under_line[5]) {
@@ -433,8 +442,12 @@ void maze_mode_1() { // 7.7V
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
             state = 2;            
-        }
+        }     
     } else if (state == 2) {
+        if (has_turned == 1) {
+            state = 0;
+            return;
+        }
         if (next_turn == 0) {
             maze_straight();
             has_turned = 1;
@@ -465,6 +478,7 @@ void maze_mode_1() { // 7.7V
         } else if (next_turn == 2) { // Right turn
             if (is_under_line[1] == 1 || is_under_line[2] == 1) {
                 if (has_been_in_light == 1) {
+                    dead_end = 0;
                     has_been_in_light = 0;
                     state = 0;
                     has_turned = 1;
