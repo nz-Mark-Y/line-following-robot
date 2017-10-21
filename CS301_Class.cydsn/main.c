@@ -51,8 +51,8 @@ int is_under_line[] = {0,0,0,0,0,0,0};                                          
 //* ========================================
 // initialising motor speed values
 int voltage = 0;
-int straightspeed1 = 80;
-int straightspeed2 = 76;
+int straightspeed1 = 75;
+int straightspeed2 = 71;
 //* ========================================
 // flags for turns
 volatile int has_turned;
@@ -286,35 +286,6 @@ int main() {
     CyDelay(3000);
     
     while(1) {     
-        /*
-        if (turn_array[ab] != -1) {
-            if (ab>-1) {
-                itoa(turn_array[ab], line, 10);
-                usb_put_string(line);
-                usb_put_string("\n\r");
-                
-            }
-            ab++;
-            if (ab>turn_max) {
-                ab = 0;
-            }
-        }
-     
-        if (totalsteps[ab] != -1) {
-            if (ab>-1) {
-                x1 = totalsteps[ab] % 19;
-                y1 = totalsteps[ab] / 19;
-
-                itoa(x1, line, 10);
-                itoa(y1, test, 10);
-                usb_put_string(line);
-                usb_put_string(":");
-                usb_put_string(test);
-                usb_put_string("\n\r");  
-            }
-            ab++;  
-        }
-          */ 
         // update each sensor values of max_value, ADC_value and is_under_line
         if (dead_end != 1) {
             next_turn = turn_array[ab];
@@ -334,19 +305,6 @@ int main() {
         } else if ((is_under_line[1] != 1)  && (is_under_line[2] == 1)) {
             last_on_line = 2;
         }
-           
-        /*
-        int complete_structure = handle_radio_data(); 
-        if (usb_output == 1) {
-            if (complete_structure == 1) {
-                int8 strength = system_state.rssi;
-                int16 xpos = system_state.robot_xpos;
-                int16 ypos = system_state.robot_ypos;
-                int16 orient = system_state.robot_orientation;     
-            }
-        }      
-        calculate_distance_travelled();
-         */
     }
 }
 //* ========================================
@@ -383,9 +341,11 @@ void maze_mode_1() { // 8.4 - 7.8V
         }
         if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) { // Correction or u turn required
             if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) { // U turn criteria (for end of line)
+                PWM_1_WriteCompare(127);
+                PWM_2_WriteCompare(127);
                 next_turn = 2;
                 dead_end = 1;
-                state = 2;
+                state = 1;
                 return;
             } else { // else correction required
                 PWM_1_WriteCompare(127);
@@ -424,7 +384,12 @@ void maze_mode_1() { // 8.4 - 7.8V
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
             state = 2;            
-        }     
+        }  
+        if ((is_under_line[4] == 1) && (dead_end == 1)) {
+            PWM_1_WriteCompare(127);
+            PWM_2_WriteCompare(127);
+            state = 2;    
+        }
     } else if (state == 2) { // Turning State
         if (has_turned == 1) {
             state = 0;
