@@ -55,7 +55,7 @@ int straightspeed1 = 80;
 int straightspeed2 = 76;
 //* ========================================
 // flags for turns
-int has_turned;
+volatile int has_turned;
 int to_turn_left = 0;
 int to_turn_right = 0;
 int dead_end = 0;
@@ -406,6 +406,10 @@ void maze_mode_1() { // 8.4 - 7.8V
         }
         
         maze_straight();
+        
+        if ((is_under_line[3] == 1) || (is_under_line[5] == 1)) {
+            light_counter = 0;
+        }
         
         if ((is_under_line[3] == 0) && (is_under_line[5] == 0) && (has_turned == 1)) { // 5 cycles of 3 and 5 under light = result turning timer
             light_counter++;
