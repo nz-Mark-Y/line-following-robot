@@ -167,6 +167,11 @@ CY_ISR(isr_TS_Interrupt)
     /*  Place your Interrupt code here. */
     /* `#START isr_TS_Interrupt` */
     has_turned = 0;
+    if (LED_Read() == 1) {
+        LED_Write(0);
+    } else {
+        LED_Write(1);
+    }
     /* `#END` */
 }
 

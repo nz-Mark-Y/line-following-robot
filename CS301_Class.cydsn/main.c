@@ -89,10 +89,6 @@ void check_mode();
 int main() {
 // ----- INITIALIZATIONS ----------
     CYGlobalIntEnable;
-
-    isr_TS_Start();
-    isr_TS_Enable();    
-    Timer_TS_SetInterruptMode(3);
     
 // ------USB SETUP ----------------    
     USBUART_Start(0,USBUART_5V_OPERATION);  
@@ -324,12 +320,6 @@ int main() {
             next_turn = turn_array[ab];
         } 
         
-        if (has_turned == 1) {
-            LED_Write(1);
-        } else {
-            LED_Write(0);
-        }
-        
         sensor_is_under_line(6);
         sensor_is_under_line(4);
         sensor_is_under_line(1);
@@ -378,7 +368,7 @@ void maze_mode_1() { // 8.4 - 7.8V
                     return;      
                 }
             } else if (next_turn == 3) { // if next turn is a u turn, check either
-                if (is_under_line[5] == 1 || is_under_line[3] == 1) {                     
+                if ((is_under_line[5] == 1) || (is_under_line[3] == 1)) {                     
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
                     state = 1;   
@@ -391,7 +381,7 @@ void maze_mode_1() { // 8.4 - 7.8V
                 }
             } 
         }
-        if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[4] != 1) && (is_under_line[5] != 1))) { // Correction or u turn required
+        if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) { // Correction or u turn required
             if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) { // U turn criteria (for end of line)
                 next_turn = 2;
                 dead_end = 1;
@@ -416,7 +406,6 @@ void maze_mode_1() { // 8.4 - 7.8V
             if (light_counter > 6) {
                 light_counter = 0;
                 has_turned = 0;
-                Timer_TS_Stop();
             }
         }    
     } else if (state == 1) { // Stop and Reverse State
@@ -448,9 +437,7 @@ void maze_mode_1() { // 8.4 - 7.8V
             ab++;
             if (ab > turn_max) {
                 ab = 0;
-            }
-            Timer_TS_Stop();
-            Timer_TS_Start();            
+            }       
         } else if (next_turn == 1) { // Left turn
             if (is_under_line[1] == 1 || is_under_line[2] == 1) {
                 if (has_been_in_light == 1) {
@@ -461,9 +448,7 @@ void maze_mode_1() { // 8.4 - 7.8V
                     ab++;
                     if (ab > turn_max) {
                         ab = 0;
-                    }
-                    Timer_TS_Stop();
-                    Timer_TS_Start();
+                    } 
                 } else {
                     turn_left();
                 }
@@ -483,8 +468,6 @@ void maze_mode_1() { // 8.4 - 7.8V
                     if (ab > turn_max) {
                         ab = 0;
                     }
-                    Timer_TS_Stop();
-                    Timer_TS_Start();
                 } else {
                     turn_right();
                 }
@@ -511,8 +494,6 @@ void maze_mode_1() { // 8.4 - 7.8V
                     if (ab > turn_max) {
                         ab = 0;
                     }
-                    Timer_TS_Stop();
-                    Timer_TS_Start();
                 } else {
                     if (to_turn_left == 1) {
                         turn_left();
