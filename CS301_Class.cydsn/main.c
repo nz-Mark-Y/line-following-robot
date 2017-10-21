@@ -32,7 +32,6 @@ int mode = 0;
 int count = 0;
 int start_count = 0;
 //* ========================================
-// Max speed of 69 cm/s
 int motor_1_distance = 0;                                                                       // distance travelled in mm
 int motor_2_distance = 0;   
 int average_distance = 0;
@@ -61,12 +60,13 @@ int to_turn_right = 0;
 int dead_end = 0;
 
 int state = 0;
-int next_turn = 0;
+int next_turn = 0;                                                                              // the next turn the robot will complete. 0 = straight, 1 = left, 2 = right, 3 = uturn
 int correcting_left = 0;
 int correcting_right = 0;
 int has_been_in_light = 0;
 int turn_max = 555;
 
+// counters
 int ab = 0;
 int light_counter = 0;
 //* ========================================
@@ -103,97 +103,98 @@ int main() {
     PWM_2_WriteCompare(127);
     
 // ------ADC SETUP ----------------      
-    ADC_Start();
-    QuadDec_M1_Start();
+    ADC_Start();                                                                                // start adc     
+    QuadDec_M1_Start();                                                                         // start quadrature decoders
     QuadDec_M2_Start();
     
 // ------UART_RF Setup------------- 
     UART_Start();
     isrRF_RX_Start();
+    
     int i = 0; 
     has_turned = 0;
     int turn_array[555];
-    for (i=0;i<turn_max;i++) {
-        turn_array[i] = -1;
+    for (i=0;i<turn_max;i++) {                                                                  // set up arrays for maze traversing algorithms
+        turn_array[i] = -1;                                                                     // initialise these arrays to -1 
     }  
     
-    int16_t retsteps[555]; //retsteps is the returned array of steps needed to traverse the map
+    int16_t retsteps[555];                                                                      //retsteps is the returned array of steps needed to traverse the map
     for (i=0;i<555;i++) {
         retsteps[i] = -1;
     }
     
-    int16_t totalsteps[1000]; //totalsteps is the total array of steps needed to traverse the map
+    int16_t totalsteps[1000];                                                                   // totalsteps is the total array of steps needed to traverse the map
     for (i=0;i<1000;i++) {
         totalsteps[i] = -1;
     }
     i = 0;
     
-    int x1, y1, x2, y2, x3, y3 = 0;
+    int x1, y1, x2, y2, x3, y3 = 0;                                                             // coordinate analysis. extracts required turns from coordinate list  
     int j = 0;
     int l,a;
     int m = 0;
     int16_t numberOfSteps = 0;
-    check_mode();
+    check_mode();                                                                               // check mode switches
     if (mode == 0) {
-	    dfs(start_X, start_Y, totalsteps);   
-        while (totalsteps[i+2] != -1) {    
-            x1 = totalsteps[i] % 19;
+	    dfs(start_X, start_Y, totalsteps);                                                      // run dfs from start position
+        while (totalsteps[i+2] != -1) {                                                         // for every coordinate, in groups of three
+            x1 = totalsteps[i] % 19;                                                            // pull out coordinate data
             y1 = totalsteps[i] / 19;
             x2 = totalsteps[i+1] % 19;
             y2 = totalsteps[i+1] / 19;
             x3 = totalsteps[i+2] % 19;
             y3 = totalsteps[i+2] / 19;
 
-            if ((x1 == x2) && (x2 == x3)) {
-                if ((y1 == y3) && (y2 != y3)) {
-                    turn_array[j] = 3;
+            if ((x1 == x2) && (x2 == x3)) {                                                     // same x values for all three coordinates
+                if ((y1 == y3) && (y2 != y3)) {                                                 // if first y value = third y value then u turn
+                    turn_array[j] = 3;  
                     j++;  
                 } else {
-                    if ((map[y2][x2+1] == 0) || (map[y2][x2-1] == 0)) {
+                    if ((map[y2][x2+1] == 0) || (map[y2][x2-1] == 0)) {                         // if coordinates in a line then straight ahead
                         turn_array[j] = 0;
                         j++;
                     }
                 }
-            } else if ((y1 == y2) && (y2 == y3)) {
-                if ((x1 == x3) && (x2 != x3)) {
+            } else if ((y1 == y2) && (y2 == y3)) {                                              // same y values for all three coordinates
+                if ((x1 == x3) && (x2 != x3)) {                                                 // if first x value = third x value then u turn
                     turn_array[j] = 3;
                     j++;      
                 } else {
-                    if ((map[y2+1][x2] == 0) || (map[y2-1][x2] == 0)) {
+                    if ((map[y2+1][x2] == 0) || (map[y2-1][x2] == 0)) {                         // if coordinates in a line then straight ahead
                         turn_array[j] = 0;
                         j++;
                     }   
                 }
-            } else if ((x1 == x2) && (x2 == x3 + 1)) {
-                if (y1 == y2 + 1) {
-                    turn_array[j] = 1;
+            } else if ((x1 == x2) && (x2 == x3 + 1)) {                                          // if x coordinate decreases after two the same
+                if (y1 == y2 + 1) {                                                             // check y coordinate
+                    turn_array[j] = 1;                                                          // left turn required
                     j++;  
                 } else if (y1 == y2 - 1) {
-                    turn_array[j] = 2;
+                    turn_array[j] = 2;                                                          // right turn required
                     j++;
                 }
-            } else if ((x1 == x2) && (x2 == x3 - 1)) {
-                if (y1 == y2 + 1) {
-                    turn_array[j] = 2;
+            } else if ((x1 == x2) && (x2 == x3 - 1)) {                                          // if x coordinate decreases after two the same    
+                if (y1 == y2 + 1) {                                                             // check y coordinate
+                    turn_array[j] = 2;                                                          // right turn required
                     j++;
                 } else if (y1 == y2 - 1) {
-                    turn_array[j] = 1;
+                    turn_array[j] = 1;                                                          // left turn required
                     j++;
                 }   
-            } else if ((x2 == x3) && (x1 == x2 - 1)) {
+            } else if ((x2 == x3) && (x1 == x2 - 1)) {                                          // if x coordinate is two the same after increase
                 if (y2 == y3 + 1) {
-                    turn_array[j] = 1;
-                    j++;  
+                    turn_array[j] = 1;                                                          // left turn required
+                    j++;                    
                 } else if (y2 == y3 - 1) {
-                    turn_array[j] = 2;
+                    turn_array[j] = 2;                                                          // right turn required
                     j++;
                 }
-            } else if ((x2 == x3) && (x1 == x2 + 1)) {
+            } else if ((x2 == x3) && (x1 == x2 + 1)) {                                          // if x coordinate is two the same after decrease
                 if (y2 == y3 + 1) {
-                    turn_array[j] = 2;
+                    turn_array[j] = 2;                                                          // right turn required
                     j++;
                 } else if (y2 == y3 - 1) {
-                    turn_array[j] = 1;
+                    turn_array[j] = 1;                                                          // left turn required
                     j++;
                 }   
             }       
@@ -201,106 +202,106 @@ int main() {
         } 
     } else if (mode == 1) {
         int k = 0;
-        int startx = start_X;
+        int startx = start_X;                                                                   // pull start coordinate from map.h     
         int starty = start_Y;
-        for (k=0; k<5; k++) {
-            numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
-            startx = food_list[k][0];
+        for (k=0; k<5; k++) {                                                                   // repeat for number of food pellets
+            numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);  // run astar given start coordinates and food coordinates
+            startx = food_list[k][0];                                                           // set new start coordinates as previous food coordinate
             starty = food_list[k][1];
 
-            for(a = 0; a < numberOfSteps; a++){
+            for(a = 0; a < numberOfSteps; a++){                                                 // copy from returned array into total array
                 totalsteps[m] = retsteps[a];
                 m++;
             }   
-            m -=1;
+            m -=1;                                                                              // truncate off last coordinate to prevent duplication
             
-            for (l=0;l<555;l++) {
+            for (l=0;l<555;l++) {                                                               // reinitialise returned array
                 retsteps[l] = -1;
             }
         } 
-        while (totalsteps[i+2] != -1) {    
-            x1 = totalsteps[i] % 19;
+        while (totalsteps[i+2] != -1) {                                                         // for every coordinate, in groups of three
+            x1 = totalsteps[i] % 19;                                                            // pull out coordinate data
             y1 = totalsteps[i] / 19;
             x2 = totalsteps[i+1] % 19;
             y2 = totalsteps[i+1] / 19;
             x3 = totalsteps[i+2] % 19;
             y3 = totalsteps[i+2] / 19;
 
-            if ((x1 == x2) && (x2 == x3)) {
-                if ((y1 == y3) && (y2 != y3)) {
-                    turn_array[j] = 3;
+            if ((x1 == x2) && (x2 == x3)) {                                                     // same x values for all three coordinates
+                if ((y1 == y3) && (y2 != y3)) {                                                 // if first y value = third y value then u turn
+                    turn_array[j] = 3;  
                     j++;  
                 } else {
-                    if ((map[y2][x2+1] == 0) || (map[y2][x2-1] == 0)) {
+                    if ((map[y2][x2+1] == 0) || (map[y2][x2-1] == 0)) {                         // if coordinates in a line then straight ahead
                         turn_array[j] = 0;
                         j++;
                     }
                 }
-            } else if ((y1 == y2) && (y2 == y3)) {
-                if ((x1 == x3) && (x2 != x3)) {
+            } else if ((y1 == y2) && (y2 == y3)) {                                              // same y values for all three coordinates
+                if ((x1 == x3) && (x2 != x3)) {                                                 // if first x value = third x value then u turn
                     turn_array[j] = 3;
                     j++;      
                 } else {
-                    if ((map[y2+1][x2] == 0) || (map[y2-1][x2] == 0)) {
+                    if ((map[y2+1][x2] == 0) || (map[y2-1][x2] == 0)) {                         // if coordinates in a line then straight ahead
                         turn_array[j] = 0;
                         j++;
                     }   
                 }
-            } else if ((x1 == x2) && (x2 == x3 + 1)) {
-                if (y1 == y2 + 1) {
-                    turn_array[j] = 1;
+            } else if ((x1 == x2) && (x2 == x3 + 1)) {                                          // if x coordinate decreases after two the same
+                if (y1 == y2 + 1) {                                                             // check y coordinate
+                    turn_array[j] = 1;                                                          // left turn required
                     j++;  
                 } else if (y1 == y2 - 1) {
-                    turn_array[j] = 2;
+                    turn_array[j] = 2;                                                          // right turn required
                     j++;
                 }
-            } else if ((x1 == x2) && (x2 == x3 - 1)) {
-                if (y1 == y2 + 1) {
-                    turn_array[j] = 2;
+            } else if ((x1 == x2) && (x2 == x3 - 1)) {                                          // if x coordinate decreases after two the same    
+                if (y1 == y2 + 1) {                                                             // check y coordinate
+                    turn_array[j] = 2;                                                          // right turn required
                     j++;
                 } else if (y1 == y2 - 1) {
-                    turn_array[j] = 1;
+                    turn_array[j] = 1;                                                          // left turn required
                     j++;
                 }   
-            } else if ((x2 == x3) && (x1 == x2 - 1)) {
+            } else if ((x2 == x3) && (x1 == x2 - 1)) {                                          // if x coordinate is two the same after increase
                 if (y2 == y3 + 1) {
-                    turn_array[j] = 1;
-                    j++;  
+                    turn_array[j] = 1;                                                          // left turn required
+                    j++;                    
                 } else if (y2 == y3 - 1) {
-                    turn_array[j] = 2;
+                    turn_array[j] = 2;                                                          // right turn required
                     j++;
                 }
-            } else if ((x2 == x3) && (x1 == x2 + 1)) {
+            } else if ((x2 == x3) && (x1 == x2 + 1)) {                                          // if x coordinate is two the same after decrease
                 if (y2 == y3 + 1) {
-                    turn_array[j] = 2;
+                    turn_array[j] = 2;                                                          // right turn required
                     j++;
                 } else if (y2 == y3 - 1) {
-                    turn_array[j] = 1;
+                    turn_array[j] = 1;                                                          // left turn required
                     j++;
                 }   
             }       
             i++;
-        } 
+        }
     }
-    ab=0;     
-    CyDelay(3000);
+
+    ab=0;                                                                                       // set turn counter to 0
+    CyDelay(3000);                                                                              // have a 3 second delay to ensure calculations are complete
     
-    while(1) {     
-        // update each sensor values of max_value, ADC_value and is_under_line
+    while(1) {                                                                                  // main while loop of function
         if (dead_end != 1) {
-            next_turn = turn_array[ab];
+            next_turn = turn_array[ab];                                                         // update the turn array with next turn if not a dead end
         } 
         
-        sensor_is_under_line(6);
+        sensor_is_under_line(6);                                                                // update each sensor values of max_value, ADC_value and is_under_line
         sensor_is_under_line(4);
         sensor_is_under_line(1);
         sensor_is_under_line(2);
         sensor_is_under_line(3);
         sensor_is_under_line(5);
         
-        maze_mode_1(); 
+        maze_mode_1();                                                                          // maze logic
 
-        if ((is_under_line[1] == 1)  && (is_under_line[2] != 1)) {
+        if ((is_under_line[1] == 1)  && (is_under_line[2] != 1)) {                              // check which of 1 or 2 was the last on the line
             last_on_line = 1;
         } else if ((is_under_line[1] != 1)  && (is_under_line[2] == 1)) {
             last_on_line = 2;
@@ -308,74 +309,77 @@ int main() {
     }
 }
 //* ========================================
-void maze_mode_1() { // 8.4 - 7.8V
-    if (state == 0) { // Straight Ahead State 
-        if (has_turned == 0) {
-            if (next_turn == 1) { // if next turn is a left, only check sensor 3
+void maze_mode_1() { // voltage range of 8.3 - 7.8V, ideal voltage is 8.1V
+    // the maze algorithm to handle all intersections, dead ends, and corrections when both front light sensors are off the line
+    // utilises maze_straight() for straight ahead sections
+
+    if (state == 0) {                                                                           // straight ahead state 
+        if (has_turned == 0) {                                                                  // if robot has turned within a certain time period, ignore side sensors
+            if (next_turn == 1) {                                                               // if next turn is a left, only check sensor 3
                 if ((is_under_line[3] == 1 && is_under_line[4] == 1) || (is_under_line[3] == 1 && is_under_line[6] == 1)) {                    
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
-                    state = 1;  
+                    state = 1;                                                                  // stop and go to reverse state
                     return;                    
                 }
-            } else if (next_turn == 2) { // if next turn is a right, only check sensor 5
+            } else if (next_turn == 2) {                                                        // if next turn is a right, only check sensor 5
                 if ((is_under_line[5] == 1 && is_under_line[4] == 1) || (is_under_line[5] == 1 && is_under_line[6] == 1)) {                   
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
-                    state = 1; 
+                    state = 1;                                                                  // stop and go to reverse state
                     return;      
                 }
-            } else if (next_turn == 3) { // if next turn is a u turn, check either
+            } else if (next_turn == 3) {                                                        // if next turn is a u turn, check either
                 if ((is_under_line[5] == 1) || (is_under_line[3] == 1)) {                     
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
-                    state = 1;   
+                    state = 1;                                                                  // stop and go to reverse state
                     return;
                 }
-            } else if (next_turn == 0) { // if next turn is a straight, check either
+            } else if (next_turn == 0) {                                                        // if next turn is a straight, check either
                 if (is_under_line[5] == 1 || is_under_line[3] == 1) {  
-                    state = 2;   
+                    state = 2;                                                                  // go to turning state
                     return;                  
                 }
             } 
         }
-        if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) { // Correction or u turn required
-            if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) { // U turn criteria (for end of line)
+        if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {     // correction or u turn required
+            if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) {                  // u turn criteria (for end of line)
                 PWM_1_WriteCompare(127);
                 PWM_2_WriteCompare(127);
-                next_turn = 2;
+                next_turn = 2;                                                                                                  // stop and set flag for dead end, then go to reverse state
                 dead_end = 1;
                 state = 1;
                 return;
-            } else { // else correction required
+            } else {                                                                                                            // else correction required
                 PWM_1_WriteCompare(127);
                 PWM_2_WriteCompare(127);
-                state = 3;  
+                state = 3;                                                                                                      // stop and go to correction state
                 return;
             }
         }
         
-        maze_straight();
+        maze_straight();                                                                        // straight ahead
         
-        if ((is_under_line[3] == 1) || (is_under_line[5] == 1)) {
+        if ((is_under_line[3] == 1) || (is_under_line[5] == 1)) {                               // reset light counter if a side sensor is under a line
             light_counter = 0;
         }
         
-        if ((is_under_line[3] == 0) && (is_under_line[5] == 0) && (has_turned == 1)) { // 5 cycles of 3 and 5 under light = result turning timer
+        if ((is_under_line[3] == 0) && (is_under_line[5] == 0) && (has_turned == 1)) {          // if 6 cycles of 3 and 5 under light then reset turning counter
             light_counter++;
             if (light_counter > 6) {
                 light_counter = 0;
                 has_turned = 0;
             }
         }    
-    } else if (state == 1) { // Stop and Reverse State
-        if (has_turned == 1) {
+    } else if (state == 1) {                                                                    // stop and reverse State
+        if (has_turned == 1) {                                                                  // if turn recently made, return to state 0
             state = 0;
             return;
         }
-        PWM_1_WriteCompare(180);
+        PWM_1_WriteCompare(180);                                                                // reverse motors
         PWM_2_WriteCompare(175);
-        if (is_under_line[3] || is_under_line[5]) {
+        if (is_under_line[3] || is_under_line[5]) {                                             // wait for side sensors to be under line, then go onto the turning state
             if (is_under_line[3] == 1) {
                 to_turn_left = 1;
             } else {
@@ -385,29 +389,29 @@ void maze_mode_1() { // 8.4 - 7.8V
             PWM_2_WriteCompare(127);
             state = 2;            
         }  
-        if ((is_under_line[4] == 1) && (dead_end == 1)) {
+        if ((is_under_line[4] == 1) && (dead_end == 1)) {                                       // if at a dead end, then just wait for sensor 4 before going on to the turning state
             PWM_1_WriteCompare(127);
             PWM_2_WriteCompare(127);
             state = 2;    
         }
-    } else if (state == 2) { // Turning State
-        if (has_turned == 1) {
+    } else if (state == 2) {                                                                    // turning state
+        if (has_turned == 1) {                                                                  // if turn recently made, return to state 0
             state = 0;
             return;
         }
-        if (next_turn == 0) { // Straight ahead            
-            state = 0;
+        if (next_turn == 0) {                                                                   // straight ahead            
+            state = 0;                                                                          // reset state, counters, increment turn array
             light_counter = 0;
             has_turned = 1;
             ab++;
             if (ab > turn_max) {
                 ab = 0;
             }       
-        } else if (next_turn == 1) { // Left turn
-            if (is_under_line[1] == 1 || is_under_line[2] == 1) {
+        } else if (next_turn == 1) {                                                            // left turn
+            if (is_under_line[1] == 1 || is_under_line[2] == 1) {                               // turn until front sensors in light, and flag set, then turn is finished
                 if (has_been_in_light == 1) {
                     has_been_in_light = 0;
-                    state = 0;
+                    state = 0;                                                                  // reset state, counters, increment turn array
                     light_counter = 0;
                     has_turned = 1;
                     ab++;
@@ -417,16 +421,16 @@ void maze_mode_1() { // 8.4 - 7.8V
                 } else {
                     turn_left();
                 }
-            } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {
+            } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {                        // turn until front light sensors in light, set flag
                 turn_left();
                 has_been_in_light = 1;            
             }
-        } else if (next_turn == 2) { // Right turn
-            if (is_under_line[1] == 1 || is_under_line[2] == 1) {
+        } else if (next_turn == 2) {                                                            // right turn
+            if (is_under_line[1] == 1 || is_under_line[2] == 1) {                               // turn until front sensors in light, and flag set, then turn is finished
                 if (has_been_in_light == 1) {
                     dead_end = 0;
                     has_been_in_light = 0;
-                    state = 0;
+                    state = 0;                                                                  // reset state, counters, increment turn array
                     light_counter = 0;
                     has_turned = 1;
                     ab++;
@@ -436,23 +440,23 @@ void maze_mode_1() { // 8.4 - 7.8V
                 } else {
                     turn_right();
                 }
-            } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {
+            } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {                        // turn until front light sensors in light, set flag
                 turn_right();
                 has_been_in_light = 1;            
             }
-        } else if (next_turn == 3) { // U turn
-            if (is_under_line[1] == 1 || is_under_line[2] == 1) {
+        } else if (next_turn == 3) {                                                            // u turn
+            if (is_under_line[1] == 1 || is_under_line[2] == 1) {                               // need to go from line, to light, to line, to light, to line again to complete turn
                 if (has_been_in_light == 1) {
-                    if (to_turn_left == 1) {
+                    if (to_turn_left == 1) {                                                    // turn left or right based on which sensor triggered
                         turn_left();
                     } else {
                         turn_right();
                     }
                     has_been_in_light = 2;
-                } else if (has_been_in_light == 3) {
+                } else if (has_been_in_light == 3) {                                            // on line with final flag set = turn completed
                     has_been_in_light = 0;
                     to_turn_left = 0;
-                    state = 0;
+                    state = 0;                                                                  // reset state, counters, increment turn array
                     light_counter = 0;
                     has_turned = 1;                    
                     ab++;
@@ -460,19 +464,19 @@ void maze_mode_1() { // 8.4 - 7.8V
                         ab = 0;
                     }
                 } else {
-                    if (to_turn_left == 1) {
+                    if (to_turn_left == 1) {                                                    // turn left or right based on which sensor triggered
                         turn_left();
                     } else {
                         turn_right();
                     }
                 }
             } else if (is_under_line[1] == 0 && is_under_line[2] == 0) {
-                if (to_turn_left == 1) {
+                if (to_turn_left == 1) {                                                        // turn left or right based on which sensor triggered
                     turn_left();
                 } else {
                     turn_right();
                 }
-                if (has_been_in_light == 2) {
+                if (has_been_in_light == 2) {                                                   // counting times under the light
                     has_been_in_light = 3;
                 } else if (has_been_in_light == 3) {
                     has_been_in_light = 3;
@@ -481,11 +485,11 @@ void maze_mode_1() { // 8.4 - 7.8V
                 }
             }  
         }
-    } else if (state == 3) { // Correction State
-        if (is_under_line[1] == 1 || is_under_line[2] == 1) {
+    } else if (state == 3) {                                                                    // correction state
+        if (is_under_line[1] == 1 || is_under_line[2] == 1) {                                   // correction complete
             state = 0;
         } else {
-            if (is_under_line[3] || is_under_line[5]) {
+            if (is_under_line[3] || is_under_line[5]) {                                         // check for intersections
                 if (has_turned == 0) {
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
@@ -493,7 +497,7 @@ void maze_mode_1() { // 8.4 - 7.8V
                     return;
                 }
             }
-            if (last_on_line == 1) {
+            if (last_on_line == 1) {                                                            // correct left or right based on which sensor was last under the line
                 turn_left_slow();    
             } else {
                 turn_right_slow();    
@@ -503,24 +507,25 @@ void maze_mode_1() { // 8.4 - 7.8V
 }
 //* ========================================
 void maze_straight() {
+    // function which handles the straight line motion for the robot travelling through the maze
     if ((is_under_line[1] == 1) && (is_under_line[2] == 1)) {
-        if (correcting_left == 1) {
+        if (correcting_left == 1) {                                                             // if a left correction has been made
             PWM_1_WriteCompare(straightspeed1);
-            PWM_2_WriteCompare(straightspeed2 + 25);
+            PWM_2_WriteCompare(straightspeed2 + 25);                                            // anti correct to remain on the line
             correcting_left = 0;
-        } else if (correcting_right == 1) {
+        } else if (correcting_right == 1) {                                                     // if a right correction has been made
             PWM_1_WriteCompare(straightspeed1);
-            PWM_2_WriteCompare(straightspeed2 - 25);
-            correcting_right = 0;
-        } else {
+            PWM_2_WriteCompare(straightspeed2 - 25);                                            // anti correct to remain on the line
+            correcting_right = 0;   
+        } else {                                                                                // otherwise just go straight
             PWM_1_WriteCompare(straightspeed1);
             PWM_2_WriteCompare(straightspeed2);
         }
-    } else if (is_under_line[1] == 1 && is_under_line[2] == 0) {  
+    } else if (is_under_line[1] == 1 && is_under_line[2] == 0) {                                // check for if a correction is requried
         PWM_1_WriteCompare(straightspeed1);
         PWM_2_WriteCompare(straightspeed2 - 15);
         correcting_left = 1;
-    } else if (is_under_line[1] == 0 && is_under_line[2] == 1) {
+    } else if (is_under_line[1] == 0 && is_under_line[2] == 1) {                                // check for if a correction is required
         PWM_1_WriteCompare(straightspeed1);
         PWM_2_WriteCompare(straightspeed2 + 15);
         correcting_right = 1;
