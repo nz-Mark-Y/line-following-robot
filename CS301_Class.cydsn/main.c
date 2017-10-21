@@ -25,13 +25,12 @@
 #include "map.h"
 //* ========================================
 char rf_string[RXSTRINGSIZE];
-char line[BUF_SIZE], test[BUF_SIZE], entry[BUF_SIZE], motor_line_1[BUF_SIZE], motor_line_2[BUF_SIZE];
+char line[BUF_SIZE], test[BUF_SIZE], entry[BUF_SIZE];
 uint8 usb_buffer[BUF_SIZE];
 //* ========================================
 int mode = 0;
 int count = 0;
 int start_count = 0;
-int usb_output = 0;
 //* ========================================
 // Max speed of 69 cm/s
 int motor_1_distance = 0;                                                                       // distance travelled in mm
@@ -42,7 +41,6 @@ int target_speed = 48;
 int target_distance = 2000;
 int motor_1_temp_distance = 0;
 int motor_2_temp_distance = 0;
-int correction = 20;
 //* ========================================
 int last_on_line = 1;
 // arrays for light sensors
@@ -53,11 +51,11 @@ int is_under_line[] = {0,0,0,0,0,0,0};                                          
 //* ========================================
 // initialising motor speed values
 int voltage = 0;
-int straightspeed1 = 75;
-int straightspeed2 = 71;
+int straightspeed1 = 80;
+int straightspeed2 = 76;
 //* ========================================
 // flags for turns
-int has_turned = 0;
+int has_turned;
 int to_turn_left = 0;
 int to_turn_right = 0;
 int dead_end = 0;
@@ -67,9 +65,8 @@ int next_turn = 0;
 int correcting_left = 0;
 int correcting_right = 0;
 int has_been_in_light = 0;
-int turn_array[555];
 int turn_max = 555;
-int i = 0; // turn array index
+
 int ab = 0;
 int light_counter = 0;
 //* ========================================
@@ -115,26 +112,21 @@ int main() {
     QuadDec_M2_Start();
     
 // ------UART_RF Setup------------- 
-    USBUART_Start(0,USBUART_5V_OPERATION);
     UART_Start();
     isrRF_RX_Start();
-    
-    if (mode_switch0_Read() == 1) {
-        usb_output = 1;
-    }
-    
+    int i = 0; 
+    has_turned = 0;
+    int turn_array[555];
     for (i=0;i<turn_max;i++) {
         turn_array[i] = -1;
-    }
-    i = 0;    
+    }  
     
-    int16_t retsteps[555]= {-1}; //retsteps is the array of steps needed to traverse the map
+    int16_t retsteps[555]; //retsteps is the returned array of steps needed to traverse the map
     for (i=0;i<555;i++) {
         retsteps[i] = -1;
     }
-    i = 0;
     
-    int16_t totalsteps[1000]; //retsteps is the array of steps needed to traverse the map
+    int16_t totalsteps[1000]; //totalsteps is the total array of steps needed to traverse the map
     for (i=0;i<1000;i++) {
         totalsteps[i] = -1;
     }
@@ -145,12 +137,9 @@ int main() {
     int l,a;
     int m = 0;
     int16_t numberOfSteps = 0;
-    int16_t numberOfStepsdfs = 0;
     check_mode();
     if (mode == 0) {
-	    numberOfStepsdfs = dfs(1, 1, totalsteps);
-        numberOfStepsdfs = numberOfStepsdfs + 1;
-        
+	    dfs(start_X, start_Y, totalsteps);   
         while (totalsteps[i+2] != -1) {    
             x1 = totalsteps[i] % 19;
             y1 = totalsteps[i] / 19;
@@ -216,9 +205,9 @@ int main() {
         } 
     } else if (mode == 1) {
         int k = 0;
-        int startx = 1;
-        int starty = 1;
-        for (k=0;k<5;k++) {
+        int startx = start_X;
+        int starty = start_Y;
+        for (k=0; k<5; k++) {
             numberOfSteps = astar(startx, starty, food_list[k][0], food_list[k][1], retsteps);
             startx = food_list[k][0];
             starty = food_list[k][1];
@@ -297,8 +286,7 @@ int main() {
             i++;
         } 
     }
-    ab=0; 
-    
+    ab=0;     
     CyDelay(3000);
     
     while(1) {     
@@ -336,6 +324,12 @@ int main() {
             next_turn = turn_array[ab];
         } 
         
+        if (has_turned == 1) {
+            LED_Write(1);
+        } else {
+            LED_Write(0);
+        }
+        
         sensor_is_under_line(6);
         sensor_is_under_line(4);
         sensor_is_under_line(1);
@@ -366,49 +360,44 @@ int main() {
     }
 }
 //* ========================================
-void maze_mode_1() { // 7.8V
-    if (state == 0) {        
-        if (next_turn == 1) { //turn left, only check sensor 3
-            if ((is_under_line[3] == 1 && is_under_line[4] == 1) || (is_under_line[3] == 1 && is_under_line[6] == 1)) {
-                if (has_turned == 1) {
-                    
-                } else {
+void maze_mode_1() { // 8.4 - 7.8V
+    if (state == 0) { // Straight Ahead State 
+        if (has_turned == 0) {
+            if (next_turn == 1) { // if next turn is a left, only check sensor 3
+                if ((is_under_line[3] == 1 && is_under_line[4] == 1) || (is_under_line[3] == 1 && is_under_line[6] == 1)) {                    
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
                     state = 1;  
-                    return;
+                    return;                    
                 }
-            }
-        } else if (next_turn == 2) {
-            if ((is_under_line[5] == 1 && is_under_line[4] == 1) || (is_under_line[5] == 1 && is_under_line[6] == 1)) {
-                if (has_turned == 1) {
-                    
-                } else {
+            } else if (next_turn == 2) { // if next turn is a right, only check sensor 5
+                if ((is_under_line[5] == 1 && is_under_line[4] == 1) || (is_under_line[5] == 1 && is_under_line[6] == 1)) {                   
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
                     state = 1; 
-                    return;
-                }            
-            }
-        } else if ((next_turn == 3) || (next_turn == 0)) {
-            if (((is_under_line[5] == 1 && is_under_line[4] == 1) || (is_under_line[5] == 1 && is_under_line[6] == 1)) || ((is_under_line[3] == 1 && is_under_line[4] == 1) || (is_under_line[3] == 1 && is_under_line[6] == 1))) {
-                if (has_turned == 1) {
-                    
-                } else {
+                    return;      
+                }
+            } else if (next_turn == 3) { // if next turn is a u turn, check either
+                if (is_under_line[5] == 1 || is_under_line[3] == 1) {                     
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
                     state = 1;   
                     return;
-                }            
-            }
-        } 
-        if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {
-            if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) {
+                }
+            } else if (next_turn == 0) { // if next turn is a straight, check either
+                if (is_under_line[5] == 1 || is_under_line[3] == 1) {  
+                    state = 2;   
+                    return;                  
+                }
+            } 
+        }
+        if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[4] != 1) && (is_under_line[5] != 1))) { // Correction or u turn required
+            if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) { // U turn criteria (for end of line)
                 next_turn = 2;
                 dead_end = 1;
                 state = 2;
                 return;
-            } else {
+            } else { // else correction required
                 PWM_1_WriteCompare(127);
                 PWM_2_WriteCompare(127);
                 state = 3;  
@@ -418,15 +407,15 @@ void maze_mode_1() { // 7.8V
         
         maze_straight();
         
-        if ((is_under_line[3] == 0) && (is_under_line[5] == 0)) {
+        if ((is_under_line[3] == 0) && (is_under_line[5] == 0) && (has_turned == 1)) { // 5 cycles of 3 and 5 under light = result turning timer
             light_counter++;
-            if (light_counter > 5) {
+            if (light_counter > 6) {
                 light_counter = 0;
                 has_turned = 0;
+                Timer_TS_Stop();
             }
-        }
-        
-    } else if (state == 1) {
+        }    
+    } else if (state == 1) { // Stop and Reverse State
         if (has_turned == 1) {
             state = 0;
             return;
@@ -443,30 +432,33 @@ void maze_mode_1() { // 7.8V
             PWM_2_WriteCompare(127);
             state = 2;            
         }     
-    } else if (state == 2) {
+    } else if (state == 2) { // Turning State
         if (has_turned == 1) {
             state = 0;
             return;
         }
-        if (next_turn == 0) {
-            maze_straight();
+        if (next_turn == 0) { // Straight ahead            
+            state = 0;
+            light_counter = 0;
             has_turned = 1;
             ab++;
             if (ab > turn_max) {
                 ab = 0;
             }
-            Timer_TS_Start();
-            state = 0;
+            Timer_TS_Stop();
+            Timer_TS_Start();            
         } else if (next_turn == 1) { // Left turn
             if (is_under_line[1] == 1 || is_under_line[2] == 1) {
                 if (has_been_in_light == 1) {
                     has_been_in_light = 0;
                     state = 0;
+                    light_counter = 0;
                     has_turned = 1;
                     ab++;
                     if (ab > turn_max) {
                         ab = 0;
                     }
+                    Timer_TS_Stop();
                     Timer_TS_Start();
                 } else {
                     turn_left();
@@ -481,11 +473,13 @@ void maze_mode_1() { // 7.8V
                     dead_end = 0;
                     has_been_in_light = 0;
                     state = 0;
+                    light_counter = 0;
                     has_turned = 1;
                     ab++;
                     if (ab > turn_max) {
                         ab = 0;
                     }
+                    Timer_TS_Stop();
                     Timer_TS_Start();
                 } else {
                     turn_right();
@@ -494,7 +488,7 @@ void maze_mode_1() { // 7.8V
                 turn_right();
                 has_been_in_light = 1;            
             }
-        } else if (next_turn == 3) { // u turn
+        } else if (next_turn == 3) { // U turn
             if (is_under_line[1] == 1 || is_under_line[2] == 1) {
                 if (has_been_in_light == 1) {
                     if (to_turn_left == 1) {
@@ -505,13 +499,15 @@ void maze_mode_1() { // 7.8V
                     has_been_in_light = 2;
                 } else if (has_been_in_light == 3) {
                     has_been_in_light = 0;
-                    state = 0;
-                    has_turned = 1;
                     to_turn_left = 0;
+                    state = 0;
+                    light_counter = 0;
+                    has_turned = 1;                    
                     ab++;
                     if (ab > turn_max) {
                         ab = 0;
                     }
+                    Timer_TS_Stop();
                     Timer_TS_Start();
                 } else {
                     if (to_turn_left == 1) {
@@ -535,14 +531,12 @@ void maze_mode_1() { // 7.8V
                 }
             }  
         }
-    } else if (state == 3) {
+    } else if (state == 3) { // Correction State
         if (is_under_line[1] == 1 || is_under_line[2] == 1) {
             state = 0;
         } else {
             if (is_under_line[3] || is_under_line[5]) {
-                if (has_turned == 1) {
-                    
-                } else {
+                if (has_turned == 0) {
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
                     state = 2;   
@@ -555,8 +549,6 @@ void maze_mode_1() { // 7.8V
                 turn_right_slow();    
             }
         }
-    } else {
-       
     }
 }
 //* ========================================
@@ -589,11 +581,11 @@ void sensor_is_under_line(int sensorNum) {
     // checks if a light sensor is under a line
     
     ADC_StartConvert();                                                                         // start conversion
-    int i = 0;
+    int p = 0;
     ADC_value[sensorNum] = 0;
     max_value[sensorNum] = 0;
     min_value[sensorNum] = 4096;
-    for (i = 0; i < 70; i++) {                                                                  // 70 data points, to cover one period of the waveform            
+    for (p = 0; p < 70; p++) {                                                                  // 70 data points, to cover one period of the waveform            
         while(1) {
             if (ADC_IsEndConversion(ADC_RETURN_STATUS) != 0) {                                  // when conversion completes
                 ADC_value[sensorNum] = ADC_GetResult16(sensorNum);                              // get result from channel
@@ -733,7 +725,7 @@ void turn_left(){
     // change to reasonable turning speed for both motors
     
     PWM_1_WriteCompare(127 + 40);                                               // move motor1 backward
-    PWM_2_WriteCompare(127 - 45);                                               // move motor2 forward  
+    PWM_2_WriteCompare(127 - 43);                                               // move motor2 forward  
 }
 //* ========================================
 void turn_left_slow(){
@@ -749,7 +741,7 @@ void turn_right() {
     // change to reasonable turning speed for both motors
 
     PWM_1_WriteCompare(127 - 40);                                               // move motor 1 forward
-    PWM_2_WriteCompare(127 + 45);                                              // move motor 2 backward 
+    PWM_2_WriteCompare(127 + 43);                                              // move motor 2 backward 
 }
 //* ========================================
 void turn_right_slow() {

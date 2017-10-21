@@ -29,7 +29,6 @@
 /* `#START isr_TS_intc` */
 #include "project.h"
 extern int has_turned;
-extern int i;
 /* `#END` */
 
 #ifndef CYINT_IRQ_BASE

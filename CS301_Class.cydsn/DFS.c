@@ -10,7 +10,7 @@ int16_t numOfSteps;
 int16_t currentX, currentY;
 int16_t traversal_map[15][19];
 
-int16_t dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps){	
+void dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps){	
 	
 	int16_t i, j;
 	for (i = 0; i < HEIGHT; i++){
@@ -23,10 +23,9 @@ int16_t dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps)
 	currentY = startlocation_y;		
 	
 	numOfSteps = 0;
-    
 	recursiveDFSCall(retsteps);	
 	
-	return numOfSteps;
+	return;
 }
 
 /*

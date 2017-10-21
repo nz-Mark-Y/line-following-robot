@@ -18,5 +18,5 @@
 
 void addStep(int16_t *retsteps);
 void recursiveDFSCall(int16_t* retsteps);
-int16_t dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps);
+void dfs(int16_t startlocation_x, int16_t startlocation_y, int16_t *retsteps);
 /* [] END OF FILE */
