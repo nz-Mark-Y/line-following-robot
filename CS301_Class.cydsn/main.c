@@ -50,8 +50,8 @@ int is_under_line[] = {0,0,0,0,0,0,0};                                          
 //* ========================================
 // initialising motor speed values
 int voltage = 0;
-int straightspeed1 = 75;
-int straightspeed2 = 71;
+int straightspeed1 = 77;
+int straightspeed2 = 74;
 //* ========================================
 // flags for turns
 volatile int has_turned;
@@ -69,6 +69,7 @@ int turn_max = 555;
 // counters
 int ab = 0;
 int light_counter = 0;
+int u_turn_counter = 0;
 //* ========================================
 // function definitions
 void maze_mode_1();
@@ -291,6 +292,22 @@ int main() {
         if (dead_end != 1) {
             next_turn = turn_array[ab];                                                         // update the turn array with next turn if not a dead end
         } 
+
+        /*if (totalsteps[ab] != -1) {
+            if (ab>-1) {
+                x1 = totalsteps[ab] % 19;
+                y1 = totalsteps[ab] / 19;
+
+                itoa(x1, line, 10);
+                itoa(y1, test, 10);
+                usb_put_string(line);
+                usb_put_string(":");
+                usb_put_string(test);
+                usb_put_string("\n\r");  
+            }
+            ab++;  
+        }*/
+        
         
         sensor_is_under_line(6);                                                                // update each sensor values of max_value, ADC_value and is_under_line
         sensor_is_under_line(4);
@@ -320,6 +337,7 @@ void maze_mode_1() { // voltage range of 8.3 - 7.8V, ideal voltage is 8.1V
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
                     state = 1;                                                                  // stop and go to reverse state
+                    u_turn_counter = 0;
                     return;                    
                 }
             } else if (next_turn == 2) {                                                        // if next turn is a right, only check sensor 5
@@ -327,30 +345,40 @@ void maze_mode_1() { // voltage range of 8.3 - 7.8V, ideal voltage is 8.1V
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
                     state = 1;                                                                  // stop and go to reverse state
+                    u_turn_counter = 0;
                     return;      
                 }
             } else if (next_turn == 3) {                                                        // if next turn is a u turn, check either
                 if ((is_under_line[5] == 1) || (is_under_line[3] == 1)) {                     
                     PWM_1_WriteCompare(127);
                     PWM_2_WriteCompare(127);
+                    u_turn_counter = 0;
                     state = 1;                                                                  // stop and go to reverse state
+                    u_turn_counter = 0;
                     return;
                 }
             } else if (next_turn == 0) {                                                        // if next turn is a straight, check either
                 if (is_under_line[5] == 1 || is_under_line[3] == 1) {  
                     state = 2;                                                                  // go to turning state
+                    u_turn_counter = 0;
                     return;                  
                 }
             } 
         }
         if (((is_under_line[1] != 1) && (is_under_line[2] != 1)) && ((is_under_line[3] != 1) && (is_under_line[5] != 1))) {     // correction or u turn required
-            if ((has_turned == 0) && (next_turn == 3) && (is_under_line[4] == 1) && (is_under_line[6] == 1)) {                  // u turn criteria (for end of line)
-                PWM_1_WriteCompare(127);
-                PWM_2_WriteCompare(127);
-                next_turn = 2;                                                                                                  // stop and set flag for dead end, then go to reverse state
-                dead_end = 1;
-                state = 1;
-                return;
+            if ((has_turned == 0) && (next_turn == 3) && (is_under_line[6] == 1)) {                  // u turn criteria (for end of line)
+                if (u_turn_counter > 2) {
+                    PWM_1_WriteCompare(127);
+                    PWM_2_WriteCompare(127);
+                    next_turn = 2;                                                                                                  // stop and set flag for dead end, then go to reverse state
+                    dead_end = 1;
+                    state = 1;
+                    u_turn_counter = 0;
+                    return;
+                }
+                else {
+                    u_turn_counter++;
+                }
             } else {                                                                                                            // else correction required
                 PWM_1_WriteCompare(127);
                 PWM_2_WriteCompare(127);
@@ -371,14 +399,18 @@ void maze_mode_1() { // voltage range of 8.3 - 7.8V, ideal voltage is 8.1V
                 light_counter = 0;
                 has_turned = 0;
             }
+            else if (light_counter == 6) {
+                PWM_1_WriteCompare(180);
+                PWM_2_WriteCompare(175);
+            }
         }    
     } else if (state == 1) {                                                                    // stop and reverse State
         if (has_turned == 1) {                                                                  // if turn recently made, return to state 0
             state = 0;
             return;
         }
-        PWM_1_WriteCompare(180);                                                                // reverse motors
-        PWM_2_WriteCompare(175);
+        PWM_1_WriteCompare(175);                                                                // reverse motors
+        PWM_2_WriteCompare(170);
         if (is_under_line[3] || is_under_line[5]) {                                             // wait for side sensors to be under line, then go onto the turning state
             if (is_under_line[3] == 1) {
                 to_turn_left = 1;
