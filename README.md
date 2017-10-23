@@ -3,7 +3,7 @@
 ### What is this repository for? ###
 
 * Line following robot with light sensing line tracking capabilities, to traverse a maze projected onto a surface.
-* Project in Development
+* Prototype version complete
 
 ### Who do I talk to? ###
 
