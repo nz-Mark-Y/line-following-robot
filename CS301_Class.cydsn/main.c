@@ -323,6 +323,7 @@ int main() {
         } else if ((is_under_line[1] != 1)  && (is_under_line[2] == 1)) {
             last_on_line = 2;
         }
+
     }
 }
 //* ========================================
@@ -375,8 +376,7 @@ void maze_mode_1() { // voltage range of 8.3 - 7.8V, ideal voltage is 8.1V
                     state = 1;
                     u_turn_counter = 0;
                     return;
-                }
-                else {
+                } else {
                     u_turn_counter++;
                 }
             } else {                                                                                                            // else correction required
@@ -395,13 +395,9 @@ void maze_mode_1() { // voltage range of 8.3 - 7.8V, ideal voltage is 8.1V
         
         if ((is_under_line[3] == 0) && (is_under_line[5] == 0) && (has_turned == 1)) {          // if 6 cycles of 3 and 5 under light then reset turning counter
             light_counter++;
-            if (light_counter > 6) {
+            if (light_counter > 4) {
                 light_counter = 0;
                 has_turned = 0;
-            }
-            else if (light_counter == 6) {
-                PWM_1_WriteCompare(180);
-                PWM_2_WriteCompare(175);
             }
         }    
     } else if (state == 1) {                                                                    // stop and reverse State
